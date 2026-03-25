@@ -1,6 +1,6 @@
 streamlit
-opencv-python-headless
+moviepy
 numpy
-pillow
+pandas
 plotly
-opencv-python
+pillow
