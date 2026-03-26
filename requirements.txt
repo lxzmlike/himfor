@@ -1,1 +1,8 @@
+
 streamlit
+电影
+opencv-python-headless
+numpy
+熊猫
+plotly
+枕头
