@@ -168,7 +168,7 @@ def get_video_info(video_path):
     cap.release()
     return {"duration": total_frames/fps, "fps": fps, "frames": total_frames, "width": width, "height": height}
 
-# ========== 数据库初始化（完整版）==========
+# ========== 数据库初始化 ==========
 def init_db():
     conn = sqlite3.connect('users.db')
     c = conn.cursor()
@@ -332,42 +332,32 @@ def speed_video(input_path, speed, output_path):
         "-c:a", "aac", output_path
     ], check=True)
 
-def apply_beauty_filter(frame, intensity=0.5):
-    beauty = cv2.bilateralFilter(frame, 9, 75, 75)
-    hsv = cv2.cvtColor(beauty, cv2.COLOR_RGB2HSV).astype(np.float32)
-    hsv[:,:,2] = np.clip(hsv[:,:,2] * (1 + intensity * 0.3), 0, 255)
-    hsv[:,:,1] = np.clip(hsv[:,:,1] * (1 - intensity * 0.2), 0, 255)
-    result = cv2.cvtColor(hsv.astype(np.uint8), cv2.COLOR_HSV2RGB)
-    return cv2.addWeighted(frame, 1-intensity, result, intensity, 0)
+极好的 应用_美颜_滤镜(框架，强度=0.5):
+美颜= cv2。双边过滤器(框架，9, 75, 75)
+hsv = cv2。CVT颜色(美颜，cv2。颜色_RGB2HSV).astype(np。float32)
+hsv色彩模型[:,:,2]= np。夹子(hsv色彩模型[:,:,2] * (1+强度*0.3), 0, 255)
+hsv色彩模型[:,:,1]= np。夹子(hsv色彩模型[:,:,1] * (1-强度*0.2), 0, 255)
+结果= cv2。CVT颜色(单纯疱疹病毒。astype(np。uint8)，cv2。颜色_HSV2RGB)
+    返回cv2。加法加权(框架，1-强度、结果、强度，0)
 
-def add_text_to_frame(frame, text, position=(50,50), font_scale=1, color=(255,255,255)):
-    cv2.putText(frame, text, position, cv2.FONT_HERSHEY_SIMPLEX, font_scale, color, 2)
-    return frame
-
-def merge_videos(input_paths, output_path):
-    with open('concat_list.txt', 'w') as f:
-        for path in input_paths:
-            f.write(f"file '{path}'\n")
-    subprocess.run(["ffmpeg", "-f", "concat", "-safe", "0", "-i", "concat_list.txt", "-c", "copy", output_path], check=True)
-
-def video_to_gif(input_path, output_path, start=0, duration=5):
-    subprocess.run(["ffmpeg", "-i", input_path, "-ss", str(start), "-t", str(duration), "-vf", "fps=10,scale=320:-1", output_path], check=True)
+极好的 视频转gif(输入路径，输出路径，开始=0，持续时间=5):
+子流程。奔跑([" ffmpeg ", “-我”，输入路径，"-ss ", 潜艇用热中子反应堆（submarine thermal reactor的缩写）(开始), "-t ", 潜艇用热中子反应堆（submarine thermal reactor的缩写）(期间), "-vf ", fps=10，scale=320:-1，输出路径]，检查=真实的)
 
 # ========== 界面函数 ==========
-def render_auth():
-    with st.sidebar:
-        st.header(t("user_center"))
-        if not st.session_state.get('logged_in', False):
-            tab = st.radio("", [t("login"), t("register")], horizontal=True)
-            if tab == t("login"):
-                with st.form("login_form"):
-                    username = st.text_input(t("username"))
-                    password = st.text_input(t("password"), type="password")
-                    if st.form_submit_button(t("login_btn")):
-                        ok, msg = login_user(username, password)
-                        if ok:
-                            log_action(username, "login")
-                            st.success(msg)
+极好的 渲染_验证():
+    随着街道补充报道:
+街道页眉(t("用户中心"))
+        如果 不街道会话状态.得到('已登录', 错误的):
+tab = st。收音机("", [t("登录"), t("注册")]，水平=真实的)
+            如果tab ==t("登录"):
+                随着街道形式("登录表单"):
+用户名= st。文本_输入(t("用户名"))
+密码= st。文本_输入(t("密码")，类型="密码")
+                    如果街道表单提交按钮(t("登录_btn ")):
+好的，消息=登录_用户(用户名、密码)
+                        如果好的:
+                            日志_操作(用户名，"登录")
+街道成功(味精)
                             st.rerun()
                         else:
                             st.error(msg)
@@ -419,8 +409,6 @@ def render_share():
     invite_link = f"{app_url}?invite={invite_code}"
     st.code(invite_link, language="text")
     st.caption("分享链接，好友注册双方得积分")
-    if st.button("复制链接"):
-        st.info("链接已复制（请手动复制）")
 
 def render_video_sites():
     st.subheader(t("video_sites"))
@@ -448,7 +436,7 @@ def render_movie_search():
 
 def render_about():
     st.subheader(t("about"))
-    st.markdown("**智能视频助手 v6.0**\n\n开发者：李国锐 & 小智（DeepSeek）\n\n这是一个爸爸和AI伙伴，用一天一夜完成的软件。\n\n献给所有敢想敢做的人！")
+    st.markdown("**智能视频助手 v6.0**\n\n开发者：李国锐 & 小智（DeepSeek）\n\n献给所有敢想敢做的人！")
 
 def render_ai_assistant():
     st.subheader(t("ai_assistant"))
@@ -484,14 +472,6 @@ def render_points_mall():
     with col1:
         if st.button("✨ 美颜滤镜 (50积分)"):
             if spend_points(st.session_state.username, 50, "购买美颜滤镜"):
-                st.success("购买成功！可在美颜滤镜功能中使用")
-    with col2:
-        if st.button("🚀 视频加速 (30积分)"):
-            if spend_points(st.session_state.username, 30, "购买视频加速"):
-                st.success("购买成功！")
-    with col3:
-        if st.button("📝 去水印 (100积分)"):
-            if spend_points(st.session_state.username, 100, "购买去水印"):
                 st.success("购买成功！")
 
 def render_multi_track():
@@ -501,7 +481,6 @@ def render_multi_track():
 def render_security():
     st.subheader(t("security"))
     st.success("✅ 安全监控运行中")
-    st.info("所有操作均有日志记录")
 
 def render_admin_panel():
     st.subheader(t("admin_panel"))
@@ -514,24 +493,15 @@ def render_admin_panel():
         st.dataframe(users)
         st.dataframe(logs)
     else:
-        st.warning("权限不足，需要管理员权限")
+        st.warning("权限不足")
 
 def render_beauty_filter():
     st.subheader(t("beauty_filter"))
     if st.session_state.get('video_path'):
         intensity = st.slider("美颜强度", 0.0, 1.0, 0.5)
         st.info(f"当前美颜强度: {intensity}")
-        if st.button("应用美颜滤镜"):
-            st.info("美颜滤镜功能开发中，即将支持实时预览")
     else:
         st.info(t("upload_first"))
-
-def render_video_merge():
-    st.subheader(t("video_merge"))
-    uploaded_files = st.file_uploader("上传多个视频", type=["mp4", "mov", "avi"], accept_multiple_files=True)
-    if uploaded_files and len(uploaded_files) >= 2:
-        if st.button("合并视频"):
-            st.info("视频合并功能开发中")
 
 def render_gif_export():
     st.subheader(t("gif_export"))
@@ -572,7 +542,7 @@ def main():
             t("ai_assistant"), t("smart_matting"), t("novel_to_video"),
             t("material_library"), t("video_sites"), t("movie_search"),
             t("points_mall"), t("multi_track"), t("security"), t("about"),
-            t("share_app"), t("video_merge")
+            t("share_app")
         ]
         
         pro_mode = st.checkbox(t("pro_mode"), value=True)
@@ -607,11 +577,10 @@ def main():
         if info:
             st.success(f"上传成功！时长: {info['duration']:.1f}秒 | 分辨率: {info['width']}x{info['height']}")
     
-    # 功能路由
     if func == t("cut"):
         st.subheader(t("cut"))
         if st.session_state.get('video_path'):
-            dur = get_video_info(st.session_state.video_path)["duration"]
+dur =获取视频信息(街道会话状态.视频路径)["持续时间"]
             start = st.number_input("开始时间(秒)", 0.0, dur, 0.0)
             end = st.number_input("结束时间(秒)", 0.0, dur, min(5.0, dur))
             if st.button("开始剪切"):
@@ -623,55 +592,53 @@ def main():
                     st.download_button(t("download"), f, file_name="cut.mp4")
                 cleanup_temp_files([out])
         else:
-            st.info(t("upload_first"))
+街道信息(t("上传_优先"))
     
-    elif func == t("speed"):
-        st.subheader(t("speed"))
-        if st.session_state.get('video_path'):
-            speed = st.number_input("速度倍数", 0.1, 5.0, 1.0, step=0.1)
-            if st.button("应用变速"):
-                out = tempfile.NamedTemporaryFile(suffix=".mp4", delete=False).name
-                with st.spinner(t("processing")):
-                    speed_video(st.session_state.video_path, speed, out)
-                st.success(t("success"))
-                with open(out, "rb") as f:
-                    st.download_button(t("download"), f, file_name="speed.mp4")
-                cleanup_temp_files([out])
-        其他:
-渲染_视频_合并(t("上传_优先"))
+     否则如果func ==t(“速度”):
+街道副标题(t(“速度”))
+        如果街道会话状态.得到('视频路径'):
+速度= st。数字_输入("速度倍数", 0.1, 5.0, 1.0，步长=0.1)
+            如果街道按钮("应用变速"):
+out = tempfile。命名临时文件(后缀=. mp4，删除=错误的).名字
+                随着街道纺纱机(t("处理")):
+                    速度_视频(街道会话状态.视频路径，速度，完毕)
+街道成功(t(“成功”))
+                随着 打开(out, "经常预算") 如同 f:
+街道下载按钮(t("下载")，f，文件名=" speed.mp4 ")下载按钮(t("下载")，f，文件名=" speed.mp4 ")
+清理临时文件([在外])清理临时文件([在外])
+否则:其他:
+街道信息(t("上传_优先"))信息(t("上传_优先"))
     
-     否则如果func ==t(【美颜_滤镜】):
-        渲染_美丽_过滤器()
-否则如果func ==t(" gif_export "):
-渲染_ gif_导出()
-否则如果func ==t("视频_合并"):
-        渲染_视频_合并()
-     否则如果 func == t(“ai _助手”):
+ 否则如果func ==t("美颜_滤镜"): 否则如果func ==t(【美颜_滤镜】):
+渲染_美丽_过滤器()渲染_美丽_过滤器()
+ 否则如果func ==t(" gif_export "): 否则如果func ==t(" gif_export "):
+渲染_ gif _导出()渲染_ gif _导出()
+否则如果func ==t(“艾_助手")：否则如果func ==t(“艾_助手"):
 render_ai_assistant()render_ai_assistant()
- 否则如果 func == t("智能抠图"): 否则如果 func == t("smart_matting"):
-渲染多重轨迹()()
-渲染_智能_抠图()func ==t("小说_到_视频”):func == t(“小说_到_视频"如果:()func == t("小说_到_视频”):func == t(“小说_到_视频"):
-render_novel_to_video()()()()
-elif func == t("材料_库”):func == t(“材料_库”):func == t(“材料_库”):func == t(“材料_库"):
-渲染_材质_库()
-elif func == t("视频网站”):func == t(“视频网站”):func == t(“视频网站”):func == t(“视频网站"):
-渲染视频网站()
-elif func = = t(" movie _ search "):func = = t(" movie _ search "):func = = t(" movie _ search "):func = = t(" movie _ search "):
-渲染_电影_搜索()
-elif func == t("积分商城”):func == t(“积分商城”):func == t(“积分商城”):func == t(“积分商城"):
-渲染点商城()_商城()
-elif func == t("多轨道”):func == t(“多轨道”):func == t(“多轨道”):func == t(“多轨道"):
-渲染多重轨迹()
-elif func = = t(" security "):elif func = = t(" security "):func = = t(" security "):elif func = = t(" security "):
-render _ security()()render _ security()
-elif func == t("约"):elif func = = t("约”):func = = t(“约"):elif func = = t("约"):
-render _ about()render _ about()()render _ about()
-elif func = = t(" admin _ panel "):elif func = = t(" admin _ panel "):func = = t(" admin _ panel "):elif func = = t(" admin _ panel "):
-render _ admin _ panel()()render _ admin _ panel()
-elif func = = t(" share _ app "):elif func = = t(" share _ app "):func = = t(" share _ app "):elif func = = t(" share _ app "):
-渲染共享()()渲染共享()
-否则：否则:否则:
-ST . info(f " { t(' current _ function ')}:{ func }，{ t(' upload _ first ')} ")info(f " { t(' current _ function ')} }:{ func }，{ t(' upload _ first '))}))info(f " { t(' current _ function '))}，{ t(' upload _ first '))))))))))info(f " { t(' current(' upload _ function ')}:{ func }，{ t(' upload _ first ')))))))))))))
+否则如果func ==t("智能抠图")：否则如果func ==t("智能抠图"):
+渲染_智能_抠图()渲染_智能_抠图()
+否则如果func ==t("小说_到_视频")：否则如果func ==t(《小说_转_视频》):
+渲染小说到视频()渲染小说到视频()
+否则如果func ==t("材料_库")：否则如果func ==t("材料_库"):
+渲染_材质_库()渲染_材质_库()
+否则如果func ==t("视频网站")：否则如果func ==t("视频网站"):
+渲染视频网站()渲染_视频_网站()
+否则如果func ==t("电影_搜索")：否则如果func ==t("电影_搜索"):
+渲染_电影_搜索()渲染_电影_搜索()
+否则如果func ==t("积分商城")：否则如果func ==t("积分_商城"):
+渲染点数_商城()渲染点数商城()
+否则如果func ==t("多轨道")：否则如果func ==t(“多轨道”):
+渲染多重轨迹()渲染_多重_轨迹()
+否则如果func ==t(“安全性”)：否则如果func ==t(“安全性”):
+渲染_安全性()渲染_安全性()
+否则如果func ==t(“关于”)：否则如果func ==t(“关于”):
+渲染_关于()渲染_关于()
+否则如果func ==t("管理面板")：否则如果func ==t("管理面板"):
+渲染_管理_面板()渲染_管理_面板()
+否则如果func ==t("共享应用")：否则如果func ==t("共享应用"):
+渲染_共享()渲染_共享()
+否则:其他:
+圣。信息(f " { t(' current _ func ')}:{ func } ")信息(f "{t('当前功能')}:{功能}")
 
-if _ _ name _ _ = " _ _ main _ _ ":_ _ name _ _ = " _ _ main _ _ ":_ _ name _ _ = " _ _ main _ _ ":
+如果__name__ ==" __main__ ":__name__ ==" __main__ ":
 主要的主要的()
