@@ -484,7 +484,6 @@ def main():
         st.info("👈 请先在左侧登录或注册")
         return
     
-    # 标题
     st.markdown("""
     <div class="main-header">
         <div style="font-size: 60px;">🤖</div>
@@ -493,7 +492,6 @@ def main():
     </div>
     """, unsafe_allow_html=True)
     
-    # 上传区域
     st.markdown("""
     <div class="upload-card">
         <div style="font-size: 48px;">📤</div>
