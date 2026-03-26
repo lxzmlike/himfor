@@ -1,1 +1,5 @@
 streamlit
+opencv-python-headless
+moviepy
+numpy
+Pillow
