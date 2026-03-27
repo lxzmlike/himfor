@@ -1051,7 +1051,7 @@ def render_ai_assistant():
     with col1:
         user_input = st.text_input("", placeholder="💬 试试说：剪掉前5秒、加速2倍、导出GIF", key="ai_input")
     with col2:
-        # 语音输入按钮（点击调用语音识别）
+        # 语音输入按钮（点击调用浏览器语音识别）
         if st.button("🎤", key="voice_btn", help="点击说话"):
             # 使用 JavaScript 调用浏览器语音识别
             st.markdown("""
@@ -1325,45 +1325,45 @@ def main():
             with wallpaper_tabs[2]:
                 render_my_wallpapers()
             with wallpaper_tabs[3]:
-                渲染_壁纸_统计()
+                render_wallpaper_stats()
     
-    随着第四栏:
-街道减价("""
-< div class= "功能卡">
-< div class="feature-icon " >📷</div >
-< div class= "功能名称">摄像头</div >
-< div class= "功能——desc " >拍照创作</div >
-</div >
-        """，unsafe_allow_html=真实的)
-        如果街道按钮("打开摄像头"，键="相机_btn "):
-            渲染_相机()
+    with col4:
+        st.markdown("""
+        <div class="feature-card">
+            <div class="feature-icon">📷</div>
+            <div class="feature-name">摄像头</div>
+            <div class="feature-desc">拍照创作</div>
+        </div>
+        """, unsafe_allow_html=True)
+        if st.button("打开摄像头", key="camera_btn"):
+            render_camera()
     
     # ========== 公益与奖池 ==========
-街道减价(< div class="section-title " >💚 公益与奖池</div > '，unsafe_allow_html=真实的)
+    st.markdown('<div class="section-title">💚 公益与奖池</div>', unsafe_allow_html=True)
     
-col1，col2 = st .列(2)
+    col1, col2 = st.columns(2)
     
-    随着列1:
-街道减价("""
-< div class= "功能卡">
-< div class="feature-icon " >🌍</div >
-< div class= "功能名称">公益积分</div >
-< div class= "功能-desc " >用积分做公益,得勋章</div >
-</div >
-        """，unsafe_allow_html=真实的)
-        如果街道按钮("做公益"，键="福利_btn "):
-            渲染_福利()
+    with col1:
+        st.markdown("""
+        <div class="feature-card">
+            <div class="feature-icon">🌍</div>
+            <div class="feature-name">公益积分</div>
+            <div class="feature-desc">用积分做公益，得勋章</div>
+        </div>
+        """, unsafe_allow_html=True)
+        if st.button("做公益", key="welfare_btn"):
+            render_welfare()
     
-    随着第二栏:
-街道减价("""
-< div class= "功能卡">
-< div class="feature-icon " >💰</div >
-< div class= "功能名称">奖池金</div >
-< div class= "功能-desc " >每月奖励创作者和公益者</div >
-</div >
-        """，unsafe_allow_html=真实的)
-        如果街道按钮("查看奖池"，键="头奖_btn "):
-            渲染_头奖()
+    with col2:
+        st.markdown("""
+        <div class="feature-card">
+            <div class="feature-icon">💰</div>
+            <div class="feature-name">奖池金</div>
+            <div class="feature-desc">每月奖励创作者和公益者</div>
+        </div>
+        """, unsafe_allow_html=True)
+        if st.button("查看奖池", key="jackpot_btn"):
+            render_jackpot()
 
-如果__name__ ==" __main__ ":
-    主要的()
+if __name__ == "__main__":
+    main()
