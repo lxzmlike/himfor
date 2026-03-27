@@ -1,28 +1,31 @@
-小智-智能视频助手8.1版
+"""
+小智 - 智能视频助手 v8.1
 优化：桌面屏显 + 一键直达 + 语音输入
-进口细流如同标准时间
-进口操作系统（Operating System）
-进口哈希里布
-进口sqlite3
-进口临时文件
-进口子过程
-进口秘密
-进口uuid
-< meta name = “支持苹果手机和移动应用” content = " yes " >
-进口
-进口随意
-进口cv2
-从PIL进口图像,图像绘制,图像字体
+"""
 
-街道设置页面配置(page_title="小智 - 智能视频助手"，page_icon="🤖",布局="宽")
+import streamlit as st
+import os
+import hashlib
+import sqlite3
+import tempfile
+import subprocess
+import secrets
+import uuid
+import json
+import time
+import random
+import cv2
+from PIL import Image, ImageDraw, ImageFont
+
+st.set_page_config(page_title="小智 - 智能视频助手", page_icon="🤖", layout="wide")
 
 # ========== PWA支持 ==========
-街道减价("""
-< link rel = " manifest " href = " manifest。JSON " >
-< meta name = " apple-mobile-we b-app-capable " content = " yes " >
-< meta name = " apple-mobile-we b-app-status-bar-style " content = " black-translucent " >
-< meta name = " apple-mobile-we B- app-title " content = "小智">
-< link rel = " apple-touch-icon " href = " https://img .图标8。com/color/96/000000/brain .png " >
+st.markdown("""
+<link rel="manifest" href="manifest.json">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="小智">
+<link rel="apple-touch-icon" href="https://img.icons8.com/color/96/000000/brain.png">
 """, unsafe_allow_html=True)
 
 # ========== 美化CSS ==========
@@ -45,7 +48,6 @@ st.markdown("""
 .main-header p {
     color: rgba(255,255,255,0.9);
 }
-/* 桌面屏显卡片 */
 .dashboard-card {
     background: white;
     border-radius: 20px;
@@ -101,12 +103,6 @@ st.markdown("""
     color: white;
     margin-bottom: 20px;
     text-align: center;
-}
-.feature-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 20px;
-    margin-bottom: 30px;
 }
 .feature-card {
     background: white;
@@ -1043,14 +1039,11 @@ def render_ai_assistant():
     st.markdown('<div class="card">', unsafe_allow_html=True)
     st.subheader("🤖 小智AI助手")
     
-    # 输入框 + 语音按钮
     col1, col2 = st.columns([5, 1])
     with col1:
         user_input = st.text_input("", placeholder="💬 试试说：剪掉前5秒、加速2倍、导出GIF", key="ai_input")
     with col2:
-        # 语音输入按钮（点击调用浏览器语音识别）
         if st.button("🎤", key="voice_btn", help="点击说话"):
-            # 使用 JavaScript 调用浏览器语音识别
             st.markdown("""
             <script>
             const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
@@ -1059,7 +1052,6 @@ def render_ai_assistant():
             recognition.onresult = function(event) {
                 const text = event.results[0][0].transcript;
                 document.querySelector('input[data-testid="stTextInput"]').value = text;
-                // 模拟提交
                 const btn = document.querySelector('button[kind="primary"]');
                 if (btn) btn.click();
             };
@@ -1070,7 +1062,6 @@ def render_ai_assistant():
     if user_input:
         if "剪" in user_input or "切" in user_input:
             st.success("✅ 已识别：剪切视频")
-            # 这里可以自动执行剪切，简化流程
         elif "速" in user_input:
             st.success("✅ 已识别：调整速度")
         elif "GIF" in user_input or "动图" in user_input:
@@ -1105,7 +1096,6 @@ def main():
     if 'language' not in st.session_state:
         st.session_state.language = 'zh'
     
-    # 自动登录
     if st.session_state.get('remember_me', False):
         if 'username' in st.session_state:
             st.session_state.logged_in = True
@@ -1130,7 +1120,6 @@ def main():
         st.info("👈 请先在左侧登录或注册")
         return
     
-    # ========== 桌面屏显 ==========
     points = get_points(st.session_state.username)
     conn = sqlite3.connect('users.db')
     c = conn.cursor()
@@ -1148,7 +1137,6 @@ def main():
     st.markdown(f'<div class="stat-item"><div class="stat-number">{wallpaper_count}</div><div class="stat-label">壁纸</div></div>', unsafe_allow_html=True)
     st.markdown('</div>', unsafe_allow_html=True)
     
-    # 热门推荐（最近上架的3个版图/壁纸）
     conn = sqlite3.connect('users.db')
     c = conn.cursor()
     c.execute("SELECT title, price_points FROM posters ORDER BY created_at DESC LIMIT 3")
@@ -1167,7 +1155,6 @@ def main():
         st.markdown('</div>', unsafe_allow_html=True)
     st.markdown('</div>', unsafe_allow_html=True)
     
-    # ========== 上传区域 ==========
     st.markdown("""
     <div class="upload-card">
         <div style="font-size: 48px;">📤</div>
@@ -1185,12 +1172,10 @@ def main():
         st.video(video_path)
         st.success("✅ 上传成功！")
     
-    # ========== 功能卡片（一键直达）==========
     st.markdown('<div class="section-title">🎬 视频创作工坊</div>', unsafe_allow_html=True)
     
     col1, col2, col3, col4 = st.columns(4)
     
-    # 剪切视频（一键直达）
     with col1:
         st.markdown("""
         <div class="feature-card">
@@ -1213,7 +1198,6 @@ def main():
             else:
                 st.warning("请先上传视频")
     
-    # 视频变速（一键直达）
     with col2:
         st.markdown("""
         <div class="feature-card">
@@ -1234,7 +1218,6 @@ def main():
             else:
                 st.warning("请先上传视频")
     
-    # 导出GIF（一键直达）
     with col3:
         st.markdown("""
         <div class="feature-card">
@@ -1256,7 +1239,6 @@ def main():
             else:
                 st.info(t("upload_first"))
     
-    # 美颜滤镜（占位）
     with col4:
         st.markdown("""
         <div class="feature-card">
@@ -1268,7 +1250,6 @@ def main():
         if st.button("开启美颜", key="beauty_btn"):
             render_beauty_filter()
     
-    # ========== AI创作生态 ==========
     st.markdown('<div class="section-title">🤖 AI创作生态</div>', unsafe_allow_html=True)
     
     col1, col2, col3, col4 = st.columns(4)
@@ -1335,7 +1316,6 @@ def main():
         if st.button("打开摄像头", key="camera_btn"):
             render_camera()
     
-    # ========== 公益与奖池 ==========
     st.markdown('<div class="section-title">💚 公益与奖池</div>', unsafe_allow_html=True)
     
     col1, col2 = st.columns(2)
