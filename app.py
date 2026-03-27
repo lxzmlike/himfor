@@ -1,6 +1,6 @@
 """
-小智 - 智能视频助手 v8.0
-完整版：视频剪辑 + 版图系统 + 壁纸系统 + 摄像头 + 积分经济 + 公益 + 奖池
+小智 - 智能视频助手 v8.1
+优化：桌面屏显 + 一键直达 + 语音输入
 """
 
 import streamlit as st
@@ -18,6 +18,15 @@ import cv2
 from PIL import Image, ImageDraw, ImageFont
 
 st.set_page_config(page_title="小智 - 智能视频助手", page_icon="🤖", layout="wide")
+
+# ========== PWA支持 ==========
+st.markdown("""
+<link rel="manifest" href="manifest.json">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="小智">
+<link rel="apple-touch-icon" href="https://img.icons8.com/color/96/000000/brain.png">
+""", unsafe_allow_html=True)
 
 # ========== 美化CSS ==========
 st.markdown("""
@@ -39,6 +48,48 @@ st.markdown("""
 .main-header p {
     color: rgba(255,255,255,0.9);
 }
+/* 桌面屏显卡片 */
+.dashboard-card {
+    background: white;
+    border-radius: 20px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+.stat-row {
+    display: flex;
+    justify-content: space-around;
+    text-align: center;
+    margin-bottom: 20px;
+}
+.stat-item {
+    flex: 1;
+}
+.stat-number {
+    font-size: 28px;
+    font-weight: bold;
+    color: #667eea;
+}
+.stat-label {
+    font-size: 12px;
+    color: #666;
+}
+.hot-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+}
+.hot-item {
+    background: #f5f5f5;
+    border-radius: 12px;
+    padding: 10px;
+    text-align: center;
+    font-size: 12px;
+    cursor: pointer;
+}
+.hot-item:hover {
+    background: #e0e0e0;
+}
 .upload-card {
     background: white;
     border-radius: 24px;
@@ -53,6 +104,12 @@ st.markdown("""
     color: white;
     margin-bottom: 20px;
     text-align: center;
+}
+.feature-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+    margin-bottom: 30px;
 }
 .feature-card {
     background: white;
@@ -203,6 +260,7 @@ def login_user(username, password):
         st.session_state.username = username
         st.session_state.points = points
         st.session_state.admin_level = admin_level
+        st.session_state.remember_me = True
         return True, "登录成功"
     return False, "密码错误"
 
@@ -638,40 +696,40 @@ def render_wallpaper_mall():
                 st.image(image_path, use_column_width=True)
             st.markdown(f"**{title[:20]}**")
             st.caption(f"👤 {creator} | 📂 {category}")
-            st.caption(f"💰 {price}积分 | ❤️ {likes} | 🛒 {buys}")
-            if st.button(f"购买", key=f"buy_wall_{wp_id}"):
-                if spend_points(st.session_state.username, price, f"购买壁纸{title}"):
-                    conn2 = sqlite3.connect('users.db')
-                    c2 = conn2.cursor()
-                    c2.execute("INSERT INTO wallpaper_purchases (user, wallpaper_id, price_points) VALUES (?, ?, ?)",
-                               (st.session_state.username, wp_id, price))
-                    c2.execute("UPDATE wallpapers SET buys = buys + 1 WHERE id = ?", (wp_id,))
-                    c2.execute("INSERT INTO wallpaper_earnings (creator, wallpaper_id, buyer, amount_points) VALUES (?, ?, ?, ?)",
-                               (creator, wp_id, st.session_state.username, price))
-                    conn2.commit()
-                    conn2.close()
-                    creator_points = int(price * 0.8)
-                    add_points(creator, creator_points, f"壁纸{title}被购买")
-                    st.success(f"购买成功！{creator}获得{creator_points}积分")
-                    st.rerun()
-                else:
-                    st.error("积分不足")
-            st.markdown('</div>', unsafe_allow_html=True)
-    if total_pages > 1:
-        col1, col2, col3 = st.columns([1, 2, 1])
-        with col2:
-            col_prev, col_page, col_next = st.columns(3)
-            if st.session_state.wallpaper_page > 1:
-                if col_prev.button("◀", key="wall_prev"):
-                    st.session_state.wallpaper_page -= 1
-                    st.rerun()
-            col_page.markdown(f"<div style='text-align:center'>{st.session_state.wallpaper_page}/{total_pages}</div>", unsafe_allow_html=True)
-            if st.session_state.wallpaper_page < total_pages:
-                if col_next.button("▶", key="wall_next"):
-                    st.session_state.wallpaper_page += 1
-                    st.rerun()
+街道标题(f "💰{价格}积分 | ❤️ {喜欢} | 🛒 {购买}")
+            如果街道按钮(f "购买"，键=f"buy_wall_{wp_id}"):
+                如果 消费积分(街道会话状态.用户名，价格，f "购买壁纸{标题}"):
+conn2 = sqlite3。连接(users.db ')
+c2 = conn2。光标()
+c2。执行(“插入到壁纸_购买(用户，壁纸_id，价格_点数)值(？, ?, ?)",
+                               (街道会话状态.用户名，wp_id，价格))
+c2。执行("更新壁纸SET buys = buys + 1 WHERE id =？", (wp_id，))
+c2。执行(“插入到wallpaper_earnings(创建者、wallpaper_id、购买者、金额_点数)值(？, ?, ?, ?)",
+                               (创建者，wp_id，st会话状态.用户名，价格))
+conn2。犯罪()
+conn2。关闭()
+创建者_积分=（同Internationalorganizations）国际组织(价格*0.8)
+                    添加点数(创建者，创建者点数，f "壁纸{标题}被购买")
+街道成功(f "购买成功！{创造者}获得{创建者_点数}积分")
+街道再放映()
+                其他:
+街道错误("积分不足")
+街道减价(</div > '，unsafe_allow_html=真实的)
+    如果总页数>1:
+col1，col2，col3 = st。列([1, 2, 1])
+        随着第二栏:
+col_prev，col_page，col_next = st。列(3)
+            如果街道会话状态.壁纸_页面 > 1:
+                如果col_prev。按钮("◀"，键="墙壁_上一页"):
+街道会话状态.壁纸_页面 -= 1
+街道再放映()
+col_page。减价(f"<div style='text-align:center ' >{街道会话状态.壁纸_页面}/{总计_页}</div > "，unsafe_allow_html=真实的)
+            如果街道会话状态.壁纸_页面<总页数:
+                如果col_next。按钮("▶"，键="下一面墙"):
+街道会话状态.壁纸_页面 += 1
+街道再放映()
 
-def render_my_wallpapers():
+极好的 渲染我的壁纸():
     st.markdown("### 🖼️ 我的壁纸")
     conn = sqlite3.connect('users.db')
     c = conn.cursor()
@@ -766,34 +824,34 @@ WELFARE_BADGES = [
     {"name": "爱心萌芽", "points": 100, "icon": "🌱"},
     {"name": "爱心使者", "points": 500, "icon": "🌟"},
     {"name": "爱心大使", "points": 1000, "icon": "💎"},
-    {"name": "公益之星", "points": 5000, "icon": "🏆"},
-    {"name": "公益传奇", "points": 10000, "icon": "👑"},
+    {"名称": "公益之星", “点数”: 5000, "icon": "🏆"},
+    {"名称": "公益传奇", “点数”: 10000, "icon": "👑"},
 ]
 
-def init_welfare_tables():
-    conn = sqlite3.connect('users.db')
-    c = conn.cursor()
-    c.execute('''CREATE TABLE IF NOT EXISTS welfare_donations (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        user TEXT,
-        project_id INTEGER,
-        points INTEGER,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+极好的 init _福利_表格():
+conn = sqlite3。连接(users.db ')
+c =连接。光标()
+c.执行(''如果不存在，则创建表福利_捐赠(
+id整数主键自动增量，
+用户文本，
+project_id整数，
+积分整数，
+创建时间时间戳默认当前时间戳
     )''')
-    c.execute('''CREATE TABLE IF NOT EXISTS welfare_points (
-        user TEXT PRIMARY KEY,
-        total_donated INTEGER DEFAULT 0
+c.执行(''如果不存在福利积分，则创建表格(
+用户文本主键，
+total_donated整数默认值为0
     )''')
-    conn.commit()
-    conn.close()
+康恩。犯罪()
+康恩。关闭()
 
-def get_welfare_points(username):
-    conn = sqlite3.connect('users.db')
-    c = conn.cursor()
-    c.execute("SELECT total_donated FROM welfare_points WHERE user = ?", (username,))
-    row = c.fetchone()
-    conn.close()
-    return row[0] if row else 0
+极好的 获取_福利_积分(用户名):
+conn = sqlite3。连接(users.db ')
+c =连接。光标()
+c.执行(" SELECT total _ donated FROM welfare _ points WHERE user =？", (用户名，))
+row = c。费特乔内()
+康恩。关闭()
+    返回排[0] 如果排其他 0
 
 def add_welfare_points(username, points, project_id):
     conn = sqlite3.connect('users.db')
@@ -987,11 +1045,35 @@ def render_language():
 def render_ai_assistant():
     st.markdown('<div class="card">', unsafe_allow_html=True)
     st.subheader("🤖 小智AI助手")
-    st.info("💬 试试说：剪掉前5秒、加速2倍、导出GIF")
-    user_input = st.text_input("输入指令")
+    
+    # 输入框 + 语音按钮
+    col1, col2 = st.columns([5, 1])
+    with col1:
+        user_input = st.text_input("", placeholder="💬 试试说：剪掉前5秒、加速2倍、导出GIF", key="ai_input")
+    with col2:
+        # 语音输入按钮（点击调用语音识别）
+        if st.button("🎤", key="voice_btn", help="点击说话"):
+            # 使用 JavaScript 调用浏览器语音识别
+            st.markdown("""
+            <script>
+            const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+            recognition.lang = 'zh-CN';
+            recognition.start();
+            recognition.onresult = function(event) {
+                const text = event.results[0][0].transcript;
+                document.querySelector('input[data-testid="stTextInput"]').value = text;
+                // 模拟提交
+                const btn = document.querySelector('button[kind="primary"]');
+                if (btn) btn.click();
+            };
+            </script>
+            """, unsafe_allow_html=True)
+            st.info("🎤 正在听你说话...")
+    
     if user_input:
         if "剪" in user_input or "切" in user_input:
             st.success("✅ 已识别：剪切视频")
+            # 这里可以自动执行剪切，简化流程
         elif "速" in user_input:
             st.success("✅ 已识别：调整速度")
         elif "GIF" in user_input or "动图" in user_input:
@@ -1026,6 +1108,11 @@ def main():
     if 'language' not in st.session_state:
         st.session_state.language = 'zh'
     
+    # 自动登录
+    if st.session_state.get('remember_me', False):
+        if 'username' in st.session_state:
+            st.session_state.logged_in = True
+    
     init_db()
     init_poster_tables()
     init_wallpaper_tables()
@@ -1046,14 +1133,44 @@ def main():
         st.info("👈 请先在左侧登录或注册")
         return
     
-    st.markdown("""
-    <div class="main-header">
-        <div style="font-size: 60px;">🤖</div>
-        <h1>小智 - 智能视频助手</h1>
-        <p>你的AI视频创作伙伴</p>
-    </div>
-    """, unsafe_allow_html=True)
+    # ========== 桌面屏显 ==========
+    points = get_points(st.session_state.username)
+    conn = sqlite3.connect('users.db')
+    c = conn.cursor()
+    c.execute("SELECT COUNT(*) FROM posters WHERE creator = ?", (st.session_state.username,))
+    poster_count = c.fetchone()[0]
+    c.execute("SELECT COUNT(*) FROM wallpapers WHERE creator = ?", (st.session_state.username,))
+    wallpaper_count = c.fetchone()[0]
+    conn.close()
     
+    st.markdown('<div class="dashboard-card">', unsafe_allow_html=True)
+    st.markdown('<div class="stat-row">', unsafe_allow_html=True)
+    st.markdown(f'<div class="stat-item"><div class="stat-number">{points}</div><div class="stat-label">积分</div></div>', unsafe_allow_html=True)
+    st.markdown(f'<div class="stat-item"><div class="stat-number">{poster_count + wallpaper_count}</div><div class="stat-label">作品数</div></div>', unsafe_allow_html=True)
+    st.markdown(f'<div class="stat-item"><div class="stat-number">{poster_count}</div><div class="stat-label">版图</div></div>', unsafe_allow_html=True)
+    st.markdown(f'<div class="stat-item"><div class="stat-number">{wallpaper_count}</div><div class="stat-label">壁纸</div></div>', unsafe_allow_html=True)
+    st.markdown('</div>', unsafe_allow_html=True)
+    
+    # 热门推荐（最近上架的3个版图/壁纸）
+    conn = sqlite3.connect('users.db')
+    c = conn.cursor()
+    c.execute("SELECT title, price_points FROM posters ORDER BY created_at DESC LIMIT 3")
+    hot_posters = c.fetchall()
+    c.execute("SELECT title, price_points FROM wallpapers ORDER BY created_at DESC LIMIT 3")
+    hot_wallpapers = c.fetchall()
+    conn.close()
+    
+    if hot_posters or hot_wallpapers:
+        st.markdown('<div class="stat-label" style="margin-bottom: 10px;">🔥 热门推荐</div>', unsafe_allow_html=True)
+        st.markdown('<div class="hot-grid">', unsafe_allow_html=True)
+        for p in hot_posters[:2]:
+            st.markdown(f'<div class="hot-item">🖼️ {p[0]}<br>{p[1]}积分</div>', unsafe_allow_html=True)
+        for w in hot_wallpapers[:2]:
+            st.markdown(f'<div class="hot-item">🎨 {w[0]}<br>{w[1]}积分</div>', unsafe_allow_html=True)
+        st.markdown('</div>', unsafe_allow_html=True)
+    st.markdown('</div>', unsafe_allow_html=True)
+    
+    # ========== 上传区域 ==========
     st.markdown("""
     <div class="upload-card">
         <div style="font-size: 48px;">📤</div>
@@ -1071,11 +1188,12 @@ def main():
         st.video(video_path)
         st.success("✅ 上传成功！")
     
-    # 板块1：视频创作工坊
+    # ========== 功能卡片（一键直达）==========
     st.markdown('<div class="section-title">🎬 视频创作工坊</div>', unsafe_allow_html=True)
     
     col1, col2, col3, col4 = st.columns(4)
     
+    # 剪切视频（一键直达）
     with col1:
         st.markdown("""
         <div class="feature-card">
@@ -1087,15 +1205,18 @@ def main():
         if st.button("开始剪切", key="cut_btn"):
             if st.session_state.get('video_path'):
                 dur = get_video_info(st.session_state.video_path)["duration"]
-                start = st.number_input("开始(秒)", 0.0, dur, 0.0)
-                end = st.number_input("结束(秒)", 0.0, dur, min(5.0, dur))
-                out = tempfile.NamedTemporaryFile(suffix=".mp4", delete=False).name
-                cut_video(st.session_state.video_path, start, end, out)
-                with open(out, "rb") as f:
-                    st.download_button("下载", f, file_name="cut.mp4")
+                with st.expander("设置剪切时间", expanded=True):
+                    start = st.number_input("开始(秒)", 0.0, dur, 0.0)
+                    end = st.number_input("结束(秒)", 0.0, dur, min(5.0, dur))
+                    if st.button("确认剪切"):
+                        out = tempfile.NamedTemporaryFile(suffix=".mp4", delete=False).name
+                        cut_video(st.session_state.video_path, start, end, out)
+                        with open(out, "rb") as f:
+                            st.download_button("下载", f, file_name="cut.mp4")
             else:
                 st.warning("请先上传视频")
     
+    # 视频变速（一键直达）
     with col2:
         st.markdown("""
         <div class="feature-card">
@@ -1106,14 +1227,17 @@ def main():
         """, unsafe_allow_html=True)
         if st.button("调整速度", key="speed_btn"):
             if st.session_state.get('video_path'):
-                speed = st.number_input("倍数", 0.5, 2.0, 1.0)
-                out = tempfile.NamedTemporaryFile(suffix=".mp4", delete=False).name
-                speed_video(st.session_state.video_path, speed, out)
-                with open(out, "rb") as f:
-                    st.download_button("下载", f, file_name="speed.mp4")
+                with st.expander("设置速度倍数", expanded=True):
+                    speed = st.number_input("倍数", 0.5, 2.0, 1.0, step=0.1)
+                    if st.button("确认变速"):
+                        out = tempfile.NamedTemporaryFile(suffix=".mp4", delete=False).name
+                        speed_video(st.session_state.video_path, speed, out)
+                        with open(out, "rb") as f:
+                            st.download_button("下载", f, file_name="speed.mp4")
             else:
                 st.warning("请先上传视频")
     
+    # 导出GIF（一键直达）
     with col3:
         st.markdown("""
         <div class="feature-card">
@@ -1123,8 +1247,19 @@ def main():
         </div>
         """, unsafe_allow_html=True)
         if st.button("导出GIF", key="gif_btn"):
-            render_gif_export()
+            if st.session_state.get('video_path'):
+                with st.expander("设置GIF参数", expanded=True):
+                    start = st.number_input("开始时间(秒)", 0.0, 10.0, 0.0)
+                    duration = st.number_input("时长(秒)", 1.0, 10.0, 3.0)
+                    if st.button("确认导出"):
+                        out = tempfile.NamedTemporaryFile(suffix=".gif", delete=False).name
+                        video_to_gif(st.session_state.video_path, out, start, duration)
+                        with open(out, "rb") as f:
+                            st.download_button("下载", f, file_name="output.gif")
+            else:
+                st.info(t("upload_first"))
     
+    # 美颜滤镜（占位）
     with col4:
         st.markdown("""
         <div class="feature-card">
@@ -1136,7 +1271,7 @@ def main():
         if st.button("开启美颜", key="beauty_btn"):
             render_beauty_filter()
     
-    # 板块2：AI与生态
+    # ========== AI创作生态 ==========
     st.markdown('<div class="section-title">🤖 AI创作生态</div>', unsafe_allow_html=True)
     
     col1, col2, col3, col4 = st.columns(4)
@@ -1160,73 +1295,75 @@ def main():
             <div class="feature-desc">创作即资产</div>
         </div>
         """, unsafe_allow_html=True)
-        poster_tabs = st.tabs(["✨ 生成版图", "🛒 版图商城", "🖼️ 我的版图", "💎 我的收藏", "📊 版图统计"])
-        with poster_tabs[0]:
-            render_poster_generator()
-        with poster_tabs[1]:
-            render_poster_mall()
-        with poster_tabs[2]:
-            render_my_posters()
-        with poster_tabs[3]:
-            render_my_collections()
-        with poster_tabs[4]:
-            render_poster_stats()
+        if st.button("进入版图", key="poster_btn"):
+            poster_tabs = st.tabs(["✨ 生成版图", "🛒 版图商城", "🖼️ 我的版图", "💎 我的收藏", "📊 版图统计"])
+            with poster_tabs[0]:
+                render_poster_generator()
+            with poster_tabs[1]:
+                render_poster_mall()
+            with poster_tabs[2]:
+                render_my_posters()
+            with poster_tabs[3]:
+                render_my_collections()
+            with poster_tabs[4]:
+                render_poster_stats()
     
-    with col3:
-        st.markdown("""
-        <div class="feature-card">
-            <div class="feature-icon">🖼️</div>
-            <div class="feature-name">壁纸系统</div>
-            <div class="feature-desc">设计即资产</div>
-        </div>
-        """, unsafe_allow_html=True)
-        wallpaper_tabs = st.tabs(["🎨 创作壁纸", "🛒 壁纸商城", "🖼️ 我的壁纸", "📊 壁纸统计"])
-        with wallpaper_tabs[0]:
-            render_wallpaper_generator()
-        with wallpaper_tabs[1]:
-            render_wallpaper_mall()
-        with wallpaper_tabs[2]:
-            render_my_wallpapers()
-        with wallpaper_tabs[3]:
-            render_wallpaper_stats()
+    随着第三栏:
+街道减价("""
+< div class= "功能卡">
+< class="feature-icon">🖼️</div>分部
+< div class= "功能名称">壁纸系统</div >
+< div class= "功能-desc " >设计即资产</div >
+</div >
+        """，unsafe_allow_html=真实的)
+        如果街道按钮("进入壁纸"，键="壁纸_btn "):
+壁纸_tabs = st。制表符(["🎨 创作壁纸", "🛒 壁纸商城", "🖼️ 我的壁纸", "📊 壁纸统计"])
+            随着壁纸_标签页[0]:
+                渲染_壁纸_生成器()
+            随着壁纸_标签页[1]:
+                渲染_壁纸_商城()
+            随着壁纸_标签页[2]:
+                渲染我的壁纸()
+            随着壁纸_标签页[3]:
+                渲染_壁纸_统计()
     
-    with col4:
-        st.markdown("""
-        <div class="feature-card">
-            <div class="feature-icon">📷</div>
-            <div class="feature-name">摄像头</div>
-            <div class="feature-desc">拍照创作</div>
-        </div>
-        """, unsafe_allow_html=True)
-        if st.button("打开摄像头", key="camera_btn"):
-            render_camera()
+    随着第四栏:
+街道减价("""
+< div class= "功能卡">
+< div class="feature-icon " >📷</div >
+< div class= "功能名称">摄像头</div >
+< div class= "功能-desc " >拍照创作</div >
+</div >
+"""，unsafe_allow_html=真实的)
+        如果街道按钮("打开摄像头"，键="相机_btn "):
+            渲染_相机()
+减价
+    # ========== 公益与奖池 ==========
+ST . markdown(' < div class = " section-title " >💚 公益与奖池</div > '，unsafe_allow_html=True)
     
-    # 板块3：公益与奖池
-    st.markdown('<div class="section-title">💚 公益与奖池</div>', unsafe_allow_html=True)
+col1，col2 = st。列(2)
     
-    col1, col2 = st.columns(2)
+，unsafe_allow_html=
+        st.减价("""减价("""减价("""减价("""
+< div 班级= "功能卡">div 班级= "功能卡">
+< div 班级="功能图标" >🌍</div >div 班级="功能图标" >🌍</div >
+< div班级= "功能名称">公益积分</div >"功能名称">公益积分</div >
+< div班级= "功能——desc”>用积分做公益,得勋章</div >"功能——desc”>用积分做公益,得勋章</div >
+</div >
+        """，unsafe_allow_html=真实的)"""，unsafe_allow_html=真实的)
+如果街道按钮("做公益"，key= "福利_btn "):
+            渲染_福利()
     
-    with col1:
-        st.markdown("""
-        <div class="feature-card">
-            <div class="feature-icon">🌍</div>
-            <div class="feature-name">公益积分</div>
-            <div class="feature-desc">用积分做公益，得勋章</div>
-        </div>
-        """, unsafe_allow_html=True)
-        if st.button("做公益", key="welfare_btn"):
-            render_welfare()
-    
-    with col2:
-        st.markdown("""
-        <div class="feature-card">
-            <div class="feature-icon">💰</div>
-            <div class="feature-name">奖池金</div>
-            <div class="feature-desc">每月奖励创作者和公益者</div>
-        </div>
-        """, unsafe_allow_html=True)
-        if st.button("查看奖池", key="jackpot_btn"):
-            render_jackpot()
+随着第二栏:
+街道减价("""
+< div 班级= "功能卡">"功能卡">
+< div 班级="功能图标" >💰</div >"功能图标" >💰</div >
+< div班级= "功能名称">奖池金</div >"功能名称">奖池金</div >
+< div班级= "功能——desc”>每月奖励创作者和公益者</div >"功能——desc”>每月奖励创作者和公益者</div >
+</div >
+        """，unsafe_allow_html=真实的)"""，unsafe_allow_html=真实的)
+如果街道按钮("查看奖池"，key= "头奖_btn "):
+            渲染_头奖()
 
-if __name__ == "__main__":
-    main()
+如果__name__ == " __main__ ":
+    主要的()
