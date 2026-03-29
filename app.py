@@ -159,7 +159,6 @@ st.markdown("""
     transform: translateY(-5px);
     box-shadow: 0 10px 25px rgba(0,0,0,0.2);
 }
-/* 底部导航栏样式 */
 .bottom-nav {
     position: fixed;
     bottom: 0;
@@ -993,7 +992,6 @@ def render_ai_assistant():
                 """, unsafe_allow_html=True)
                 st.info("🎤 正在听你说话...")
         if user_input:
-            # 解析剪切指令
             cut_match = re.search(r'剪[掉切去]前?(\d+(?:\.\d+)?)\s*秒', user_input)
             if cut_match:
                 start = 0
@@ -1007,8 +1005,6 @@ def render_ai_assistant():
                 else:
                     st.warning("请先上传视频")
                 st.stop()
-            
-            # 解析变速指令
             speed_match = re.search(r'加速(\d+(?:\.\d+)?)\s*倍', user_input)
             if speed_match:
                 speed = float(speed_match.group(1))
@@ -1021,8 +1017,6 @@ def render_ai_assistant():
                 else:
                     st.warning("请先上传视频")
                 st.stop()
-            
-            # 解析导出GIF指令
             if "gif" in user_input.lower() or "动图" in user_input:
                 if st.session_state.get('video_path'):
                     with st.expander("GIF参数", expanded=True):
@@ -1037,7 +1031,6 @@ def render_ai_assistant():
                 else:
                     st.warning("请先上传视频")
                 st.stop()
-            
             st.info(f"收到：{user_input}，但我还不太理解，试试说“剪掉前5秒”、“加速2倍”或“导出GIF”")
     
     with tab2:
@@ -1070,7 +1063,6 @@ def render_ai_assistant():
             gen_script = st.button("生成分镜脚本", use_container_width=True)
         with col2:
             make_video = st.button("🎬 一键成片（AI自动合成）", use_container_width=True)
-        
         if gen_script and story_prompt:
             with st.spinner("正在生成分镜..."):
                 script = f"""
@@ -1081,7 +1073,6 @@ def render_ai_assistant():
                 """
                 st.success("分镜脚本已生成")
                 st.text(script)
-        
         if make_video and story_prompt:
             with st.spinner("小智正在根据你的故事从素材库选取片段..."):
                 materials = get_materials_for_story(story_prompt)
@@ -1121,9 +1112,7 @@ def render_ai_assistant():
                         keywords.append(tag)
                 if not keywords:
                     keywords = ["创意"]
-
                 st.success(f"✨ 小智分析：你想创作关于「{', '.join(keywords)}」的内容")
-                
                 st.markdown("**📝 为你生成的文案**")
                 if "夏天" in keywords:
                     if "海边" in keywords:
@@ -1150,7 +1139,6 @@ def render_ai_assistant():
                 if not any(k in keywords for k in ["夏天","旅行","美食","宠物","科技","情感"]):
                     st.markdown(f"• 🎨 关于「{user_idea[:30]}」的创意，用镜头讲述你的故事。")
                     st.markdown("• 💡 每一个灵感都值得被记录，开始创作吧！")
-                
                 st.markdown("**🎬 简易分镜脚本（可直接使用）**")
                 if "夏天" in keywords and "海边" in keywords:
                     st.markdown("""
@@ -1191,7 +1179,6 @@ def render_ai_assistant():
                     3. 高潮：最精彩部分（4秒）  
                     4. 结尾：总结或升华（3秒）
                     """)
-                
                 st.markdown("**🎵 配乐建议**")
                 if "夏天" in keywords:
                     st.markdown("- 🎶 轻快吉他曲《夏日午后》")
@@ -1207,7 +1194,6 @@ def render_ai_assistant():
                     st.markdown("- 🎶 舒缓钢琴曲《时光》")
                 else:
                     st.markdown("- 🎶 舒缓纯音乐《梦想的旅程》")
-                
                 st.markdown("**📦 推荐素材（可在「仓库」找到）**")
                 if "夏天" in keywords:
                     st.markdown("- 🎬 夏日海滩视频片段（素材库）")
@@ -1222,7 +1208,6 @@ def render_ai_assistant():
                     st.markdown("- 🐕 萌宠日常视频（素材库）")
                 if "科技" in keywords:
                     st.markdown("- 🖥️ 科技感转场特效（特效库）")
-                
                 st.info("💡 你可以根据这些灵感，去「仓库」找素材，或用「提词拍摄」录一段视频。")
             else:
                 st.warning("请输入你想创作的内容")
@@ -1304,8 +1289,6 @@ def render_core_creation():
 
 def render_asset_system():
     st.markdown("### 💰 数字资产系统")
-    
-    # ========== 智能推荐区域 ==========
     st.markdown("#### 🧠 为你推荐")
     preferences = get_user_preferences(st.session_state.username)
     recommended = []
@@ -1317,7 +1300,6 @@ def render_asset_system():
     recommended = [m for score, m in recommended][:3]
     if not recommended:
         recommended = VIDEO_MATERIALS[:2]
-    
     cols = st.columns(len(recommended))
     for i, m in enumerate(recommended):
         with cols[i]:
@@ -1325,7 +1307,6 @@ def render_asset_system():
             st.caption(f"**{m['name']}**  /  {' '.join(['#'+t for t in m['tags']])}")
             if st.button(f"应用 {m['name']}", key=f"rec_{i}"):
                 st.info(f"已将 {m['name']} 添加到待编辑列表（功能开发中）")
-    
     st.markdown("---")
     st.markdown("#### 🎨 版图系统")
     if st.button("进入版图系统", use_container_width=True):
@@ -1351,11 +1332,9 @@ def render_asset_system():
             render_my_wallpapers()
         with wallpaper_tabs[3]:
             render_wallpaper_stats()
-    
     st.markdown("---")
     st.markdown("#### 📦 官方素材库")
     st.markdown("试试这些免费素材，一键应用到你的创作中")
-    
     st.markdown("**🎬 视频素材**")
     cols = st.columns(3)
     for i, m in enumerate(VIDEO_MATERIALS):
@@ -1364,7 +1343,6 @@ def render_asset_system():
             st.caption(f"**{m['name']}**  /  {' '.join(['#'+t for t in m['tags']])}")
             if st.button(f"应用 {m['name']}", key=f"apply_video_{i}"):
                 st.info(f"已将 {m['name']} 添加到待编辑列表（功能开发中）")
-    
     st.markdown("**🎵 背景音乐**")
     cols = st.columns(3)
     for i, m in enumerate(MUSIC_MATERIALS):
@@ -1373,7 +1351,6 @@ def render_asset_system():
             st.caption(f"**{m['name']}**  /  {' '.join(['#'+t for t in m['tags']])}")
             if st.button(f"应用 {m['name']}", key=f"apply_music_{i}"):
                 st.info(f"已将 {m['name']} 添加到配乐列表（功能开发中）")
-    
     st.markdown("**📝 文字模板**")
     cols = st.columns(3)
     for i, tpl in enumerate(TEXT_TEMPLATES):
@@ -1571,20 +1548,16 @@ def render_language():
 def main():
     if 'language' not in st.session_state:
         st.session_state.language = 'zh'
-    
     if st.session_state.get('remember_me', False):
         if 'username' in st.session_state:
             st.session_state.logged_in = True
-    
     init_db()
     init_poster_tables()
     init_wallpaper_tables()
     init_welfare_tables()
     init_jackpot_tables()
-    
     render_language()
     render_auth()
-    
     if not st.session_state.get('logged_in', False):
         st.markdown("""
         <div class="main-header">
@@ -1595,7 +1568,6 @@ def main():
         """, unsafe_allow_html=True)
         st.info("👈 请先在左侧登录或注册")
         return
-    
     points = get_points(st.session_state.username)
     conn = sqlite3.connect('users.db')
     c = conn.cursor()
@@ -1611,11 +1583,9 @@ def main():
     st.markdown(f'<div class="stat-item"><div class="stat-number">{poster_count}</div><div class="stat-label">版图</div></div>', unsafe_allow_html=True)
     st.markdown(f'<div class="stat-item"><div class="stat-number">{wallpaper_count}</div><div class="stat-label">壁纸</div></div>', unsafe_allow_html=True)
     st.markdown('</div>', unsafe_allow_html=True)
-    
     if 'first_visit' not in st.session_state:
         st.session_state.first_visit = True
         st.info("🎉 欢迎来到小智！点击底部导航栏体验不同功能，试试「提词拍摄」和「表情包工厂」。说“剪掉前5秒”也能剪视频哦！")
-    
     conn = sqlite3.connect('users.db')
     c = conn.cursor()
     c.execute("SELECT title, price_points FROM posters ORDER BY created_at DESC LIMIT 3")
@@ -1631,10 +1601,8 @@ def main():
         for w in hot_wallpapers[:2]:
             st.markdown(f'<div class="hot-item">🎨 {w[0]}<br>{w[1]}积分</div>', unsafe_allow_html=True)
         st.markdown('</div>', unsafe_allow_html=True)
-    
     if 'nav_index' not in st.session_state:
         st.session_state.nav_index = 0
-    
     nav_items = ["🎬 剪辑", "🤖 AI创作", "📦 仓库", "🌐 社区", "👤 我的"]
     cols = st.columns(len(nav_items))
     for i, name in enumerate(nav_items):
@@ -1642,7 +1610,6 @@ def main():
             if st.button(name, use_container_width=True):
                 st.session_state.nav_index = i
                 st.rerun()
-    
     if st.session_state.nav_index == 0:
         render_core_creation()
     elif st.session_state.nav_index == 1:
@@ -1651,35 +1618,35 @@ def main():
         render_asset_system()
     elif st.session_state.nav_index == 3:
         render_community()
-否则:else主要的
-其他()渲染_经济()
-圣马克道(“-”)减价("---")
-如果圣巴顿(“📬 消息中心”):如果圣巴顿(“📬 消息中心"):
-渲染消息()渲染消息()
-街道减价("####📋 新手任务")减价("#### 📋 新手任务")
-任务= [[
-{ "姓名": "上传视频“，”完成“:海报_计数> 0或壁纸_计数> 0}，{"name": "上传视频", "done": poster_count > 0 or wallpaper_count > 0},
-{ "姓名": "生成第一个版图","完成":poster_count > 0}，{"name ":"生成第一个版图”，“完成”:poster_count > 0}，
-{ "姓名": "完成一次公益捐赠","完成":获取_福利_积分(ST . session _ state。用户名)> 0 }，{ "名称": "完成一次公益捐赠”，“完成”:get _ welfare _ points(ST . session _ state . username)> 0 }，
+    else:
+        render_economy()
+        st.markdown("---")
+        if st.button("📬 消息中心"):
+            render_messages()
+        st.markdown("#### 📋 新手任务")
+        tasks = [
+            {"name": "上传视频", "done": poster_count > 0 or wallpaper_count > 0},
+            {"name": "生成第一个版图", "done": poster_count > 0},
+            {"name": "完成一次公益捐赠", "done": get_welfare_points(st.session_state.username) > 0},
         ]
-对于任务中的任务:对于任务中的任务:
-status _ class = " done " if task[" done "]else " pending " " done if task[" done "]else " pending "
-status_text = "已完成"如果任务["完成"]否则"未完成""已完成"如果任务["完成"]否则"未完成"
-圣马克道(f " ")< span class = " task-name " > { task[' name ']}(f " ")
-< div class= "任务项目">
-< span class = " task-name " > { task < span class = " task-status { status _ class } " > { status _ text } ' name ']} </span >
-< span class = " task-status { status _ class } " > { status _ text " "，unsafe_allow_html=True)</span >
-</div >
-"""，unsafe_allow_html=True)
-如果不是任务[0]["完成"]:如果不是任务[0]["完成"]:
-st.info("💡 去「剪辑」上传一个视频试试!")信息(“💡 去「剪辑」上传一个视频试试!")
- 否则如果非任务[1]["完成"]:如果不是任务[1]["完成"]:
-st.info("💡 上传视频后,去「仓库」生成版图吧!")信息(“💡 上传视频后,去「仓库」生成版图吧!")
- 否则如果非任务[2]["完成"]:如果不是任务[2]["完成"]:
-st.info("💡 去「我的」做一次公益捐赠,获得勋章!")信息(“💡 去「我的」做一次公益捐赠,获得勋章!")
-否则:否则:
-圣气球气球()
-圣成功("🎉 恭喜你完成所有新手任务!")成功(“🎉 恭喜你完成所有新手任务!")
+        for task in tasks:
+            status_class = "done" if task["done"] else "pending"
+            status_text = "已完成" if task["done"] else "未完成"
+            st.markdown(f"""
+            <div class="task-item">
+                <span class="task-name">{task['name']}</span>
+                <span class="task-status {status_class}">{status_text}</span>
+            </div>
+            """, unsafe_allow_html=True)
+        if not tasks[0]["done"]:
+            st.info("💡 去「剪辑」上传一个视频试试！")
+        elif not tasks[1]["done"]:
+            st.info("💡 上传视频后，去「仓库」生成版图吧！")
+        elif not tasks[2]["done"]:
+            st.info("💡 去「我的」做一次公益捐赠，获得勋章！")
+        else:
+            st.balloons()
+            st.success("🎉 恭喜你完成所有新手任务！")
 
-if _ _ name _ _ = " _ _ main _ _ ":_ _ name _ _ = = " _ _ main _ _ ":
-主要的主要的()
+if __name__ == "__main__":
+    main()
