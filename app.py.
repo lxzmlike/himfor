@@ -1,6 +1,6 @@
 """
-小智 - 智能视频助手 v8.8
-新增：官方素材库 + AI一键成片演示
+小智 - 智能视频助手 v8.9
+新增：AI 助手自然语言理解 + 智能推荐
 """
 
 import streamlit as st
@@ -14,6 +14,7 @@ import uuid
 import json
 import time
 import random
+import re
 import cv2
 from PIL import Image, ImageDraw, ImageFont
 from datetime import datetime, timedelta
@@ -310,6 +311,112 @@ def init_db():
     conn.commit()
     conn.close()
 
+def init_poster_tables():
+    conn = sqlite3.connect('users.db')
+    c = conn.cursor()
+    c.execute('''CREATE TABLE IF NOT EXISTS posters (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        creator TEXT,
+        title TEXT,
+        description TEXT,
+        price_points INTEGER DEFAULT 100,
+        rarity TEXT DEFAULT '普通',
+        image_path TEXT,
+        likes INTEGER DEFAULT 0,
+        buys INTEGER DEFAULT 0,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )''')
+    c.execute('''CREATE TABLE IF NOT EXISTS poster_collections (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user TEXT,
+        poster_id INTEGER,
+        bought_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )''')
+    c.execute('''CREATE TABLE IF NOT EXISTS poster_earnings (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        creator TEXT,
+        poster_id INTEGER,
+        buyer TEXT,
+        amount_points INTEGER,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )''')
+    conn.commit()
+    conn.close()
+
+def init_wallpaper_tables():
+    conn = sqlite3.connect('users.db')
+    c = conn.cursor()
+    c.execute('''CREATE TABLE IF NOT EXISTS wallpapers (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        creator TEXT,
+        title TEXT,
+        description TEXT,
+        image_path TEXT,
+        price_points INTEGER DEFAULT 100,
+        category TEXT DEFAULT '其他',
+        signature_info TEXT,
+        likes INTEGER DEFAULT 0,
+        buys INTEGER DEFAULT 0,
+        status TEXT DEFAULT 'on_sale',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )''')
+    c.execute('''CREATE TABLE IF NOT EXISTS wallpaper_purchases (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user TEXT,
+        wallpaper_id INTEGER,
+        price_points INTEGER,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )''')
+    c.execute('''CREATE TABLE IF NOT EXISTS wallpaper_earnings (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        creator TEXT,
+        wallpaper_id INTEGER,
+        buyer TEXT,
+        amount_points INTEGER,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )''')
+    conn.commit()
+    conn.close()
+
+def init_welfare_tables():
+    conn = sqlite3.connect('users.db')
+    c = conn.cursor()
+    c.execute('''CREATE TABLE IF NOT EXISTS welfare_donations (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user TEXT,
+        project_id INTEGER,
+        points INTEGER,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )''')
+    c.execute('''CREATE TABLE IF NOT EXISTS welfare_points (
+        user TEXT PRIMARY KEY,
+        total_donated INTEGER DEFAULT 0
+    )''')
+    conn.commit()
+    conn.close()
+
+def init_jackpot_tables():
+    conn = sqlite3.connect('users.db')
+    c = conn.cursor()
+    c.execute('''CREATE TABLE IF NOT EXISTS jackpot (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        month TEXT,
+        total_points INTEGER DEFAULT 0,
+        distributed INTEGER DEFAULT 0,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )''')
+    c.execute('''CREATE TABLE IF NOT EXISTS jackpot_winners (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        month TEXT,
+        winner TEXT,
+        category TEXT,
+        rank INTEGER,
+        points INTEGER,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )''')
+    conn.commit()
+    conn.close()
+
 def hash_password(password, salt=None):
     if salt is None:
         salt = secrets.token_hex(16)
@@ -360,22 +467,33 @@ def get_points(username):
     conn.close()
     return row[0] if row else 0
 
-def add_points(username, amount, reason):
+def spend_points(username, points, reason):
     conn = sqlite3.connect('users.db')
+    conn.execute("BEGIN")
     c = conn.cursor()
-    c.execute("UPDATE users SET points = points + ? WHERE username=?", (amount, username))
+    c.execute("SELECT points FROM users WHERE username=? FOR UPDATE", (username,))
+    row = c.fetchone()
+    if not row or row[0] < points:
+        conn.rollback()
+        conn.close()
+        return False
+    c.execute("UPDATE users SET points = points - ? WHERE username=?", (points, username))
     c.execute("INSERT INTO user_logs (username, action) VALUES (?, ?)", (username, reason))
     conn.commit()
     conn.close()
+    return True
 
-def spend_points(username, points, reason):
+def add_points(username, amount, reason):
     conn = sqlite3.connect('users.db')
+    conn.execute("BEGIN")
     c = conn.cursor()
-    c.execute("SELECT points FROM users WHERE username=?", (username,))
+    c.execute("SELECT points FROM users WHERE username=? FOR UPDATE", (username,))
     row = c.fetchone()
-    if not row or row[0] < points:
+    if not row:
+        conn.rollback()
+        conn.close()
         return False
-    c.execute("UPDATE users SET points = points - ? WHERE username=?", (points, username))
+    c.execute("UPDATE users SET points = points + ? WHERE username=?", (amount, username))
     c.execute("INSERT INTO user_logs (username, action) VALUES (?, ?)", (username, reason))
     conn.commit()
     conn.close()
@@ -429,38 +547,6 @@ def render_messages():
 # ========== 版图系统 ==========
 POSTER_DIR = "poster_images"
 os.makedirs(POSTER_DIR, exist_ok=True)
-
-def init_poster_tables():
-    conn = sqlite3.connect('users.db')
-    c = conn.cursor()
-    c.execute('''CREATE TABLE IF NOT EXISTS posters (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        creator TEXT,
-        title TEXT,
-        description TEXT,
-        price_points INTEGER DEFAULT 100,
-        rarity TEXT DEFAULT '普通',
-        image_path TEXT,
-        likes INTEGER DEFAULT 0,
-        buys INTEGER DEFAULT 0,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    )''')
-    c.execute('''CREATE TABLE IF NOT EXISTS poster_collections (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        user TEXT,
-        poster_id INTEGER,
-        bought_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    )''')
-    c.execute('''CREATE TABLE IF NOT EXISTS poster_earnings (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        creator TEXT,
-        poster_id INTEGER,
-        buyer TEXT,
-        amount_points INTEGER,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    )''')
-    conn.commit()
-    conn.close()
 
 def save_poster_image(frame, poster_id):
     height, width = frame.shape[:2]
@@ -629,41 +715,6 @@ def render_poster_stats():
 WALLPAPER_DIR = "wallpapers"
 os.makedirs(WALLPAPER_DIR, exist_ok=True)
 
-def init_wallpaper_tables():
-    conn = sqlite3.connect('users.db')
-    c = conn.cursor()
-    c.execute('''CREATE TABLE IF NOT EXISTS wallpapers (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        creator TEXT,
-        title TEXT,
-        description TEXT,
-        image_path TEXT,
-        price_points INTEGER DEFAULT 100,
-        category TEXT DEFAULT '其他',
-        signature_info TEXT,
-        likes INTEGER DEFAULT 0,
-        buys INTEGER DEFAULT 0,
-        status TEXT DEFAULT 'on_sale',
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    )''')
-    c.execute('''CREATE TABLE IF NOT EXISTS wallpaper_purchases (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        user TEXT,
-        wallpaper_id INTEGER,
-        price_points INTEGER,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    )''')
-    c.execute('''CREATE TABLE IF NOT EXISTS wallpaper_earnings (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        creator TEXT,
-        wallpaper_id INTEGER,
-        buyer TEXT,
-        amount_points INTEGER,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    )''')
-    conn.commit()
-    conn.close()
-
 def save_wallpaper_image(uploaded_file, signature_info):
     ext = uploaded_file.name.split('.')[-1]
     filename = f"{uuid.uuid4().hex}.jpg"
@@ -711,7 +762,6 @@ WELFARE_PROJECTS = [
     {"id": 3, "name": "残障创作者支持", "points": 200, "icon": "❤️", "impact": "支持1位残障创作者"},
     {"id": 4, "name": "动物保护视频", "points": 30, "icon": "🐕", "impact": "帮助1只流浪动物"},
 ]
-
 WELFARE_BADGES = [
     {"name": "爱心萌芽", "points": 100, "icon": "🌱"},
     {"name": "爱心使者", "points": 500, "icon": "🌟"},
@@ -719,23 +769,6 @@ WELFARE_BADGES = [
     {"name": "公益之星", "points": 5000, "icon": "🏆"},
     {"name": "公益传奇", "points": 10000, "icon": "👑"},
 ]
-
-def init_welfare_tables():
-    conn = sqlite3.connect('users.db')
-    c = conn.cursor()
-    c.execute('''CREATE TABLE IF NOT EXISTS welfare_donations (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        user TEXT,
-        project_id INTEGER,
-        points INTEGER,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    )''')
-    c.execute('''CREATE TABLE IF NOT EXISTS welfare_points (
-        user TEXT PRIMARY KEY,
-        total_donated INTEGER DEFAULT 0
-    )''')
-    conn.commit()
-    conn.close()
 
 def get_welfare_points(username):
     conn = sqlite3.connect('users.db')
@@ -803,28 +836,6 @@ def render_welfare():
     st.markdown('</div>', unsafe_allow_html=True)
 
 # ========== 奖池金 ==========
-def init_jackpot_tables():
-    conn = sqlite3.connect('users.db')
-    c = conn.cursor()
-    c.execute('''CREATE TABLE IF NOT EXISTS jackpot (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        month TEXT,
-        total_points INTEGER DEFAULT 0,
-        distributed INTEGER DEFAULT 0,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    )''')
-    c.execute('''CREATE TABLE IF NOT EXISTS jackpot_winners (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        month TEXT,
-        winner TEXT,
-        category TEXT,
-        rank INTEGER,
-        points INTEGER,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    )''')
-    conn.commit()
-    conn.close()
-
 def get_current_jackpot():
     conn = sqlite3.connect('users.db')
     c = conn.cursor()
@@ -880,14 +891,83 @@ def render_jackpot():
     - **10%** 分配给新星榜Top4
     - **10%** 滚入下月奖池
     """)
-    st.markdown('</div>', unsafe_allow_html=True)
+    st.markdown('</div>', unsafe# ========== 智能推荐辅助函数 ==========
+def get_user_preferences(username):
+    """获取用户偏好标签（基于购买和当前视频）"""
+    conn = sqlite3.connect('users.db')
+    c = conn.cursor()
+    c.execute("""
+        SELECT p.title 
+        FROM poster_collections pc 
+        JOIN posters p ON pc.poster_id = p.id 
+        WHERE pc.user = ? 
+        ORDER BY pc.bought_at DESC LIMIT 5
+    """, (username,))
+    bought_titles = [row[0] for row in c.fetchall()]
+    conn.close()
+    
+    video_path = st.session_state.get('video_path', '')
+    video_name = os.path.basename(video_path) if video_path else ''
+    
+    keywords = []
+    all_text = " ".join(bought_titles) + " " + video_name
+    keyword_map = {
+        "夏天": ["夏天", "夏日", "summer"],
+        "海边": ["海边", "沙滩", "海", "beach"],
+        "旅行": ["旅行", "旅游", "trip"],
+        "美食": ["美食", "food"],
+        "宠物": ["宠物", "猫", "狗", "pet"],
+        "科技": ["科技", "tech"],
+        "夜景": ["夜景", "night"],
+        "城市": ["城市", "city"],
+    }
+    for tag, words in keyword_map.items():
+        if any(w in all_text.lower() for w in words):
+            keywords.append(tag)
+    if not keywords:
+        keywords = ["创意", "热门"]
+    return keywords
+
+# ========== 素材库（可移入 config）==========
+VIDEO_MATERIALS = [
+    {"name": "夏日海滩", "tags": ["夏天", "海边"], "url": "https://www.w3schools.com/html/mov_bbb.mp4"},
+    {"name": "城市夜景", "tags": ["城市", "夜景"], "url": "https://www.w3schools.com/html/movie.mp4"},
+    {"name": "美食特写", "tags": ["美食"], "url": "https://www.w3schools.com/html/mov_bbb.mp4"},
+    {"name": "萌宠日常", "tags": ["宠物"], "url": "https://www.w3schools.com/html/mov_bbb.mp4"},
+    {"name": "旅行Vlog", "tags": ["旅行"], "url": "https://www.w3schools.com/html/mov_bbb.mp4"},
+    {"name": "科技未来", "tags": ["科技"], "url": "https://www.w3schools.com/html/movie.mp4"},
+]
+
+MUSIC_MATERIALS = [
+    {"name": "轻快吉他", "tags": ["轻快"], "url": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3"},
+    {"name": "舒缓钢琴", "tags": ["舒缓"], "url": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3"},
+    {"name": "动感节奏", "tags": ["动感"], "url": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3"},
+]
+
+TEXT_TEMPLATES = [
+    {"name": "夏日文案", "text": "夏天的风，吹过海面", "tags": ["夏天"]},
+    {"name": "旅行标语", "text": "在路上，遇见自己", "tags": ["旅行"]},
+    {"name": "美食语录", "text": "唯有美食与爱不可辜负", "tags": ["美食"]},
+]
+
+def get_materials_for_story(story_text):
+    """根据故事文本返回匹配的素材列表（名称和URL）"""
+    story_lower = story_text.lower()
+    selected = set()
+    for material in VIDEO_MATERIALS:
+        for tag in material["tags"]:
+            if tag in story_lower:
+                selected.add(material["name"])
+    if not selected:
+        selected = {VIDEO_MATERIALS[0]["name"], VIDEO_MATERIALS[1]["name"]}
+    result = [m for m in VIDEO_MATERIALS if m["name"] in selected]
+    return result
 
 # ========== 小智AI助手 ==========
 def render_ai_assistant():
     st.markdown('<div class="card">', unsafe_allow_html=True)
     st.subheader("🤖 小智AI助手")
     
-    # 四个功能标签
     tab1, tab2, tab3, tab4 = st.tabs(["✂️ 剪辑指令", "📝 创意写作", "🎬 故事成片", "💡 创作灵感"])
     
     with tab1:
@@ -911,14 +991,52 @@ def render_ai_assistant():
                 """, unsafe_allow_html=True)
                 st.info("🎤 正在听你说话...")
         if user_input:
-            if "剪" in user_input or "切" in user_input:
-                st.success("✅ 已识别：剪切视频")
-            elif "速" in user_input:
-                st.success("✅ 已识别：调整速度")
-            elif "GIF" in user_input or "动图" in user_input:
-                st.success("✅ 已识别：导出GIF")
-            else:
-                st.info(f"收到：{user_input}")
+            # 解析剪切指令
+            cut_match = re.search(r'剪[掉切去]前?(\d+(?:\.\d+)?)\s*秒', user_input)
+            if cut_match:
+                start = 0
+                end = float(cut_match.group(1))
+                if st.session_state.get('video_path'):
+                    out = tempfile.NamedTemporaryFile(suffix=".mp4", delete=False).name
+                    cut_video(st.session_state.video_path, start, end, out)
+                    with open(out, "rb") as f:
+                        st.download_button("下载剪切后的视频", f, file_name="cut.mp4")
+                    st.success(f"✅ 已剪掉前 {end} 秒")
+                else:
+                    st.warning("请先上传视频")
+                st.stop()
+            
+            # 解析变速指令
+            speed_match = re.search(r'加速(\d+(?:\.\d+)?)\s*倍', user_input)
+            if speed_match:
+                speed = float(speed_match.group(1))
+                if st.session_state.get('video_path'):
+                    out = tempfile.NamedTemporaryFile(suffix=".mp4", delete=False).name
+                    speed_video(st.session_state.video_path, speed, out)
+                    with open(out, "rb") as f:
+                        st.download_button(f"下载 {speed}x 视频", f, file_name=f"speed_{speed}x.mp4")
+                    st.success(f"✅ 已加速 {speed} 倍")
+                else:
+                    st.warning("请先上传视频")
+                st.stop()
+            
+            # 解析导出GIF指令
+            if "gif" in user_input.lower() or "动图" in user_input:
+                if st.session_state.get('video_path'):
+                    with st.expander("GIF参数", expanded=True):
+                        start = st.number_input("开始(秒)", 0.0, 10.0, 0.0)
+                        duration = st.number_input("时长(秒)", 1.0, 10.0, 3.0)
+                        if st.button("确认导出"):
+                            out = tempfile.NamedTemporaryFile(suffix=".gif", delete=False).name
+                            video_to_gif(st.session_state.video_path, out, start, duration)
+                            with open(out, "rb") as f:
+                                st.download_button("下载GIF", f, file_name="output.gif")
+                            st.success("✅ GIF已生成")
+                else:
+                    st.warning("请先上传视频")
+                st.stop()
+            
+            st.info(f"收到：{user_input}，但我还不太理解，试试说“剪掉前5秒”、“加速2倍”或“导出GIF”")
     
     with tab2:
         st.markdown("#### 📝 创意写作")
@@ -945,108 +1063,165 @@ def render_ai_assistant():
     with tab3:
         st.markdown("#### 🎬 AI故事成片")
         story_prompt = st.text_area("输入故事梗概", height=100, placeholder="例如：一个宇航员在火星上发现了一朵花")
-        if st.button("生成分镜脚本", use_container_width=True):
-            if story_prompt:
-                with st.spinner("正在生成分镜..."):
-                    script = """
-                    镜头1：太空舱内，宇航员望着窗外火星荒原（5秒）
-                    镜头2：宇航员走出舱门，在红色土地上行走（8秒）
-                    镜头3：发现裂缝中一朵白色小花，特写（5秒）
-                    镜头4：宇航员蹲下，轻轻触碰花瓣（4秒）
-                    镜头5：夕阳下，宇航员与小花合影（6秒）
-                    """
-                    st.success("分镜脚本已生成")
-                    st.text(script)
-                    if st.button("一键成片（示例）"):
-                        st.info("示例视频生成中……（实际会调用素材库合成）")
-            else:
-                st.warning("请输入故事梗概")
+        col1, col2 = st.columns(2)
+        with col1:
+            gen_script = st.button("生成分镜脚本", use_container_width=True)
+        with col2:
+            make_video = st.button("🎬 一键成片（AI自动合成）", use_container_width=True)
         
-        # 新增：一键成片演示
-        if st.button("🎬 一键成片（AI自动合成）", use_container_width=True):
-            if story_prompt:
-                with st.spinner("小智正在根据你的灵感创作视频..."):
-                    # 简单关键词匹配
-                    keywords = []
-                    if "夏天" in story_prompt or "夏日" in story_prompt:
-                        keywords.append("夏天")
-                    if "海边" in story_prompt:
-                        keywords.append("海边")
-                    if "旅行" in story_prompt:
-                        keywords.append("旅行")
-                    # 从素材库中根据关键词选取片段（这里用内置的示例）
-                    # 为了演示，我们随机选取两个示例视频片段
-                    video_paths = [
-                        "https://www.w3schools.com/html/mov_bbb.mp4",
-                        "https://www.w3schools.com/html/movie.mp4"
-                    ]
-                    # 使用 moviepy 拼接（需要下载到本地再处理，这里简化为提示）
-                    # 实际应下载视频、拼接、输出
-                    st.info("正在生成视频...（演示版，实际会合成视频）")
-                    # 模拟生成后展示一个下载按钮
-                    st.success("视频合成完成！点击下载")
-                    # 这里可以生成一个假的下载链接
-                    st.download_button("下载视频", data=b"fake", file_name="output.mp4")
-            else:
-                st.warning("请输入故事梗概")
+        if gen_script and story_prompt:
+            with st.spinner("正在生成分镜..."):
+                script = f"""
+                镜头1：{story_prompt[:20]}... 引入场景（5秒）
+                镜头2：细节特写，展示关键元素（8秒）
+                镜头3：情感爆发或转折（5秒）
+                镜头4：结局，留下想象空间（4秒）
+                """
+                st.success("分镜脚本已生成")
+                st.text(script)
+        
+        if make_video and story_prompt:
+            with st.spinner("小智正在根据你的故事从素材库选取片段..."):
+                materials = get_materials_for_story(story_prompt)
+                if materials:
+                    st.info(f"✅ 已匹配到 {len(materials)} 个相关素材：{', '.join([m['name'] for m in materials])}")
+                    st.markdown("**正在合成视频...（演示版）**")
+                    progress_bar = st.progress(0)
+                    for i in range(100):
+                        time.sleep(0.01)
+                        progress_bar.progress(i + 1)
+                    st.success("视频合成完成！点击下载（演示文件）")
+                    st.download_button("下载视频", data=b"fake video data", file_name="output.mp4", mime="video/mp4")
+                else:
+                    st.warning("未能匹配到素材，请尝试更具体的故事描述，如“海边夏日”、“科技未来”等。")
     
     with tab4:
         st.markdown("#### 💡 创作灵感")
-        st.markdown("告诉我你想创作什么，小智给你灵感建议")
-        user_idea = st.text_input("", placeholder="例如：做一个关于夏天的视频", key="inspire_input")
+        st.markdown("告诉我你想创作什么，小智给你灵感建议，还能生成文案和分镜脚本！")
+        user_idea = st.text_input("", placeholder="例如：做一个关于夏天海边的短视频", key="inspire_input")
         if st.button("🎯 分析灵感", use_container_width=True):
             if user_idea:
                 keywords = []
-                if "夏天" in user_idea or "夏日" in user_idea:
-                    keywords.append("夏天")
-                if "海边" in user_idea or "沙滩" in user_idea:
-                    keywords.append("海边")
-                if "旅行" in user_idea or "旅游" in user_idea:
-                    keywords.append("旅行")
-                if "美食" in user_idea or "吃" in user_idea:
-                    keywords.append("美食")
-                if "宠物" in user_idea or "猫" in user_idea or "狗" in user_idea:
-                    keywords.append("宠物")
-                if "教程" in user_idea or "教学" in user_idea:
-                    keywords.append("教程")
-                if "vlog" in user_idea or "日常" in user_idea:
-                    keywords.append("vlog")
-                if keywords:
-                    st.success(f"✨ 小智分析：你想创作关于「{', '.join(keywords)}」的内容")
-                    st.markdown("**推荐素材：**")
-                    if "夏天" in keywords:
-                        st.markdown("- 🎬 夏日海滩视频片段（素材库）")
-                        st.markdown("- 🌊 海浪声音效（音效库）")
+                idea_lower = user_idea.lower()
+                keyword_map = {
+                    "夏天": ["夏天", "夏日", "summer"],
+                    "海边": ["海边", "沙滩", "海", "beach"],
+                    "旅行": ["旅行", "旅游", "trip"],
+                    "美食": ["美食", "吃", "food"],
+                    "宠物": ["宠物", "猫", "狗", "pet"],
+                    "教程": ["教程", "教学", "tutorial"],
+                    "vlog": ["vlog", "日常", "vlog"],
+                    "科技": ["科技", "技术", "tech"],
+                    "情感": ["情感", "爱情", "治愈", "heartwarming"]
+                }
+                for tag, words in keyword_map.items():
+                    if any(w in idea_lower for w in words):
+                        keywords.append(tag)
+                if not keywords:
+                    keywords = ["创意"]
+
+                st.success(f"✨ 小智分析：你想创作关于「{', '.join(keywords)}」的内容")
+                
+                st.markdown("**📝 为你生成的文案**")
+                if "夏天" in keywords:
                     if "海边" in keywords:
-                        st.markdown("- 🏖️ 沙滩漫步镜头（素材库）")
-                    if "旅行" in keywords:
-                        st.markdown("- ✈️ 旅行Vlog片段（素材库）")
-                    if "美食" in keywords:
-                        st.markdown("- 🍜 美食特写视频（素材库）")
-                    if "宠物" in keywords:
-                        st.markdown("- 🐕 萌宠日常视频（素材库）")
-                    st.markdown("**文案灵感：**")
-                    if "夏天" in keywords:
-                        st.markdown("- “夏天的风，吹过海面，也吹进心里”")
-                        st.markdown("- “这个夏天，想和你一起去看海”")
-                    if "旅行" in keywords:
-                        st.markdown("- “在路上，遇见最好的自己”")
-                    if "美食" in keywords:
-                        st.markdown("- “唯有美食与爱不可辜负”")
-                    if "宠物" in keywords:
-                        st.markdown("- “有你的每一天都是晴天”")
-                    st.markdown("**配乐建议：**")
-                    if "夏天" in keywords or "海边" in keywords:
-                        st.markdown("- 🎵 轻快吉他曲《夏日午后》")
-                    elif "旅行" in keywords:
-                        st.markdown("- 🎵 轻松民谣《去远方》")
-                    elif "美食" in keywords:
-                        st.markdown("- 🎵 欢快钢琴曲《美味时光》")
+                        st.markdown("• 🌊 夏天的海，是天空的镜子。风吹过，带走所有烦恼。")
+                        st.markdown("• 🏖️ 赤脚踩在沙滩上，浪花吻过脚趾，这个夏天，我们去看海吧。")
                     else:
-                        st.markdown("- 🎵 舒缓纯音乐《梦想的旅程》")
-                    st.info("💡 你可以根据这些灵感，去「仓库」找素材，或用「提词拍摄」录一段视频。")
+                        st.markdown("• ☀️ 蝉鸣的午后，冰镇的西瓜，是夏天最动人的音符。")
+                        st.markdown("• 🌻 向日葵追逐阳光，就像我们追逐梦想，夏天，就是向上的季节。")
+                if "旅行" in keywords:
+                    st.markdown("• ✈️ 在路上，遇见最美的风景，也遇见最好的自己。")
+                    st.markdown("• 🎒 背包里装的是梦想，脚下走的是远方。")
+                if "美食" in keywords:
+                    st.markdown("• 🍜 唯有美食与爱不可辜负，用镜头记录每一份温暖。")
+                    st.markdown("• 🍰 一口甜蜜，一段回忆，美食是最好的治愈。")
+                if "宠物" in keywords:
+                    st.markdown("• 🐕 有你的每一天，都是晴天。记录毛孩子的可爱瞬间。")
+                    st.markdown("• 🐱 它不懂你的世界，但它的世界全是你。")
+                if "科技" in keywords:
+                    st.markdown("• 🚀 科技让想象触手可及，探索未来，从此刻开始。")
+                    st.markdown("• 💡 每一个创意，都可能改变世界。")
+                if "情感" in keywords:
+                    st.markdown("• ❤️ 时光慢些吧，让我多陪陪重要的人。")
+                    st.markdown("• 🌈 爱，是平淡日子里的光。")
+                if not any(k in keywords for k in ["夏天","旅行","美食","宠物","科技","情感"]):
+                    st.markdown(f"• 🎨 关于「{user_idea[:30]}」的创意，用镜头讲述你的故事。")
+                    st.markdown("• 💡 每一个灵感都值得被记录，开始创作吧！")
+                
+                st.markdown("**🎬 简易分镜脚本（可直接使用）**")
+                if "夏天" in keywords and "海边" in keywords:
+                    st.markdown("""
+                    1. 全景：海浪拍打沙滩（3秒）  
+                    2. 特写：脚踩在湿沙上（2秒）  
+                    3. 中景：人物望向远方（3秒）  
+                    4. 特写：贝壳被浪冲上来（2秒）  
+                    5. 全景：夕阳下的海岸线（4秒）
+                    """)
+                elif "旅行" in keywords:
+                    st.markdown("""
+                    1. 快速剪辑：火车窗外风景（2秒）  
+                    2. 中景：背包客行走（3秒）  
+                    3. 特写：地图被风吹动（2秒）  
+                    4. 延时：云卷云舒（3秒）  
+                    5. 自拍镜头：对着镜头微笑（2秒）
+                    """)
+                elif "美食" in keywords:
+                    st.markdown("""
+                    1. 特写：食材落入锅中（2秒）  
+                    2. 中景：烹饪过程（3秒）  
+                    3. 特写：食物出锅热气（2秒）  
+                    4. 餐桌全景：摆盘（2秒）  
+                    5. 人物品尝的满足表情（3秒）
+                    """)
+                elif "宠物" in keywords:
+                    st.markdown("""
+                    1. 宠物睡觉特写（2秒）  
+                    2. 玩耍时的追逐（3秒）  
+                    3. 主人抚摸宠物的温馨镜头（2秒）  
+                    4. 宠物歪头卖萌（2秒）  
+                    5. 夕阳下，宠物与主人的背影（3秒）
+                    """)
                 else:
-                    st.info("小智暂时还不太理解，试试用更具体的关键词，比如“夏天海边”或“旅行vlog”")
+                    st.markdown("""
+                    1. 开头：引入主题（3秒）  
+                    2. 发展：展示核心内容（5秒）  
+                    3. 高潮：最精彩部分（4秒）  
+                    4. 结尾：总结或升华（3秒）
+                    """)
+                
+                st.markdown("**🎵 配乐建议**")
+                if "夏天" in keywords:
+                    st.markdown("- 🎶 轻快吉他曲《夏日午后》")
+                elif "旅行" in keywords:
+                    st.markdown("- 🎶 民谣《去远方》")
+                elif "美食" in keywords:
+                    st.markdown("- 🎶 欢快钢琴曲《美味时光》")
+                elif "宠物" in keywords:
+                    st.markdown("- 🎶 温暖轻音乐《陪伴》")
+                elif "科技" in keywords:
+                    st.markdown("- 🎶 电子音乐《未来之光》")
+                elif "情感" in keywords:
+                    st.markdown("- 🎶 舒缓钢琴曲《时光》")
+                else:
+                    st.markdown("- 🎶 舒缓纯音乐《梦想的旅程》")
+                
+                st.markdown("**📦 推荐素材（可在「仓库」找到）**")
+                if "夏天" in keywords:
+                    st.markdown("- 🎬 夏日海滩视频片段（素材库）")
+                    st.markdown("- 🌊 海浪声音效（音效库）")
+                if "海边" in keywords:
+                    st.markdown("- 🏖️ 沙滩漫步镜头（素材库）")
+                if "旅行" in keywords:
+                    st.markdown("- ✈️ 旅行Vlog片段（素材库）")
+                if "美食" in keywords:
+                    st.markdown("- 🍜 美食特写视频（素材库）")
+                if "宠物" in keywords:
+                    st.markdown("- 🐕 萌宠日常视频（素材库）")
+                if "科技" in keywords:
+                    st.markdown("- 🖥️ 科技感转场特效（特效库）")
+                
+                st.info("💡 你可以根据这些灵感，去「仓库」找素材，或用「提词拍摄」录一段视频。")
             else:
                 st.warning("请输入你想创作的内容")
     
@@ -1127,7 +1302,29 @@ def render_core_creation():
 
 def render_asset_system():
     st.markdown("### 💰 数字资产系统")
-    # 原有的版图/壁纸入口
+    
+    # ========== 智能推荐区域 ==========
+    st.markdown("#### 🧠 为你推荐")
+    preferences = get_user_preferences(st.session_state.username)
+    recommended = []
+    for m in VIDEO_MATERIALS:
+        score = sum(1 for tag in m["tags"] if tag in preferences)
+        if score > 0:
+            recommended.append((score, m))
+    recommended.sort(reverse=True, key=lambda x: x[0])
+    recommended = [m for score, m in recommended][:3]
+    if not recommended:
+        recommended = VIDEO_MATERIALS[:2]
+    
+    cols = st.columns(len(recommended))
+    for i, m in enumerate(recommended):
+        with cols[i]:
+            st.video(m["url"], format="video/mp4", start_time=0)
+            st.caption(f"**{m['name']}**  /  {' '.join(['#'+t for t in m['tags']])}")
+            if st.button(f"应用 {m['name']}", key=f"rec_{i}"):
+                st.info(f"已将 {m['name']} 添加到待编辑列表（功能开发中）")
+    
+    st.markdown("---")
     st.markdown("#### 🎨 版图系统")
     if st.button("进入版图系统", use_container_width=True):
         poster_tabs = st.tabs(["✨ 生成版图", "🛒 版图商城", "🖼️ 我的版图", "💎 我的收藏", "📊 版图统计"])
@@ -1153,54 +1350,32 @@ def render_asset_system():
         with wallpaper_tabs[3]:
             render_wallpaper_stats()
     
-    # ========== 新增：官方素材库 ==========
     st.markdown("---")
     st.markdown("#### 📦 官方素材库")
     st.markdown("试试这些免费素材，一键应用到你的创作中")
     
-    # 示例视频素材
-    video_materials = [
-        {"name": "夏日海滩", "tags": ["夏天", "海边"], "url": "https://www.w3schools.com/html/mov_bbb.mp4"},
-        {"name": "城市夜景", "tags": ["城市", "夜景"], "url": "https://www.w3schools.com/html/movie.mp4"},
-        {"name": "美食特写", "tags": ["美食"], "url": "https://www.w3schools.com/html/mov_bbb.mp4"},  # 实际应换为美食视频
-    ]
-    
     st.markdown("**🎬 视频素材**")
     cols = st.columns(3)
-    for i, m in enumerate(video_materials):
-        with cols[i]:
+    for i, m in enumerate(VIDEO_MATERIALS):
+        with cols[i % 3]:
             st.video(m["url"], format="video/mp4", start_time=0)
             st.caption(f"**{m['name']}**  /  {' '.join(['#'+t for t in m['tags']])}")
             if st.button(f"应用 {m['name']}", key=f"apply_video_{i}"):
                 st.info(f"已将 {m['name']} 添加到待编辑列表（功能开发中）")
     
-    # 示例音乐素材
-    music_materials = [
-        {"name": "轻快吉他", "tags": ["轻快"], "url": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3"},
-        {"name": "舒缓钢琴", "tags": ["舒缓"], "url": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3"},
-        {"name": "动感节奏", "tags": ["动感"], "url": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3"},
-    ]
-    
     st.markdown("**🎵 背景音乐**")
     cols = st.columns(3)
-    for i, m in enumerate(music_materials):
-        with cols[i]:
+    for i, m in enumerate(MUSIC_MATERIALS):
+        with cols[i % 3]:
             st.audio(m["url"], format="audio/mp3")
             st.caption(f"**{m['name']}**  /  {' '.join(['#'+t for t in m['tags']])}")
             if st.button(f"应用 {m['name']}", key=f"apply_music_{i}"):
                 st.info(f"已将 {m['name']} 添加到配乐列表（功能开发中）")
     
-    # 示例文字模板
-    text_templates = [
-        {"name": "夏日文案", "text": "夏天的风，吹过海面", "tags": ["夏天"]},
-        {"name": "旅行标语", "text": "在路上，遇见自己", "tags": ["旅行"]},
-        {"name": "美食语录", "text": "唯有美食与爱不可辜负", "tags": ["美食"]},
-    ]
-    
     st.markdown("**📝 文字模板**")
     cols = st.columns(3)
-    for i, tpl in enumerate(text_templates):
-        with cols[i]:
+    for i, tpl in enumerate(TEXT_TEMPLATES):
+        with cols[i % 3]:
             st.markdown(f"<div style='background:#f5f5f5; padding:10px; border-radius:10px;'>{tpl['text']}</div>", unsafe_allow_html=True)
             st.caption(f"**{tpl['name']}**  /  {' '.join(['#'+tg for tg in tpl['tags']])}")
             if st.button(f"复制 {tpl['name']}", key=f"copy_text_{i}"):
@@ -1419,7 +1594,6 @@ def main():
         st.info("👈 请先在左侧登录或注册")
         return
     
-    # 顶部积分卡片
     points = get_points(st.session_state.username)
     conn = sqlite3.connect('users.db')
     c = conn.cursor()
@@ -1436,12 +1610,10 @@ def main():
     st.markdown(f'<div class="stat-item"><div class="stat-number">{wallpaper_count}</div><div class="stat-label">壁纸</div></div>', unsafe_allow_html=True)
     st.markdown('</div>', unsafe_allow_html=True)
     
-    # 新手引导（首次登录）
     if 'first_visit' not in st.session_state:
         st.session_state.first_visit = True
         st.info("🎉 欢迎来到小智！点击底部导航栏体验不同功能，试试「提词拍摄」和「表情包工厂」。说“剪掉前5秒”也能剪视频哦！")
     
-    # 热门推荐（示例）
     conn = sqlite3.connect('users.db')
     c = conn.cursor()
     c.execute("SELECT title, price_points FROM posters ORDER BY created_at DESC LIMIT 3")
@@ -1458,7 +1630,6 @@ def main():
             st.markdown(f'<div class="hot-item">🎨 {w[0]}<br>{w[1]}积分</div>', unsafe_allow_html=True)
         st.markdown('</div>', unsafe_allow_html=True)
     
-    # 底部导航栏模拟
     if 'nav_index' not in st.session_state:
         st.session_state.nav_index = 0
     
@@ -1470,21 +1641,19 @@ def main():
                 st.session_state.nav_index = i
                 st.rerun()
     
-    # 根据选中的索引显示内容
-    if st.session_state.nav_index == 0:  # 剪辑
+    if st.session_state.nav_index == 0:
         render_core_creation()
-    elif st.session_state.nav_index == 1:  # AI创作
+    elif st.session_state.nav_index == 1:
         render_ai_assistant()
-    elif st.session_state.nav_index == 2:  # 仓库
+    elif st.session_state.nav_index == 2:
         render_asset_system()
-    elif st.session_state.nav_index == 3:  # 社区
+    elif st.session_state.nav_index == 3:
         render_community()
-    else:  # 我的
+    else:
         render_economy()
         st.markdown("---")
         if st.button("📬 消息中心"):
             render_messages()
-        # 新手任务示例
         st.markdown("#### 📋 新手任务")
         tasks = [
             {"name": "上传视频", "done": poster_count > 0 or wallpaper_count > 0},
@@ -1511,4 +1680,4 @@ def main():
             st.success("🎉 恭喜你完成所有新手任务！")
 
 if __name__ == "__main__":
-    main()
+    main()_allow_html=True)
