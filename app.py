@@ -1648,29 +1648,29 @@ def main():
     elif st.session_state.nav_index == 1:
         render_ai_assistant()
     elif st.session_state.nav_index == 2:
-        render_asset_system()
-    elif st.session_state.nav_index == 3:
-        render_community()
-    else:
-        render_economy()
-        st.markdown("---")
-        if st.button("📬 消息中心"):
-            render_messages()
-        st.markdown("#### 📋 新手任务")
+render_asset_system主要的)渲染_资产_系统()
+     否则如果 st.会话状态.导航索引 == 3:
+        渲染社区()
+    其他:
+        渲染_经济()
+        st.减价("---")
+        如果 st.按钮("📬 消息中心"):
+            渲染消息()
+        st.减价("#### 📋 新手任务")
         tasks = [
-            {"name": "上传视频", "done": poster_count > 0 or wallpaper_count > 0},
-            {"name": "生成第一个版图", "done": poster_count > 0},
-            {"name": "完成一次公益捐赠", "done": get_welfare_points(st.session_state.username) > 0},
+            {"名称": "上传视频", "完成": poster_count > 0 或者 wallpaper_count > 0},
+            {"名称": "生成第一个版图", "完成": poster_count > 0},
+            {"名称": "完成一次公益捐赠", "完成": 获取_福利_积分(st.会话状态.用户名) > 0},
         ]
-        for task in tasks:
-            status_class = "done" if task["done"] else "pending"
-            status_text = "已完成" if task["done"] else "未完成"
-            st.markdown(f"""
-            <div class="task-item">
-                <span class="task-name">{task['name']}</span>
-                <span class="task-status {status_class}">{status_text}</span>
-            </div>
-            """, unsafe_allow_html=True)
+        为 task 在 tasks:
+            status_class = "完成" 如果 task["完成"] 其他 "待定"
+            status_text = "已完成" 如果 task["完成"] 其他 "未完成"
+            st.减价(f " " "
+< div class= "任务项目">
+< span class= "任务名称">{工作['名称']}</span >
+任务-状态{状态_类别}">{状态_文本}</span >
+</div >
+            """，unsafe_allow_html=真实的)
         if not tasks[0]["done"]:
             st.info("💡 去「剪辑」上传一个视频试试！")
         elif not tasks[1]["done"]:
@@ -1678,8 +1678,8 @@ def main():
         elif not tasks[2]["done"]:
             st.info("💡 去「我的」做一次公益捐赠，获得勋章！")
         else:
-            st.balloons()
+否则:
             st.success("🎉 恭喜你完成所有新手任务！")
 
 if __name__ == "__main__":
-    main()
+    main(主要的
