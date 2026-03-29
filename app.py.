@@ -963,7 +963,9 @@ def get_materials_for_story(story_text):
     if not selected:
         selected = {VIDEO_MATERIALS[0]["name"], VIDEO_MATERIALS[1]["name"]}
     result = [m for m in VIDEO_MATERIALS if m["name"] in selected]
-    return result# ========== 小智AI助手 ==========
+    return result
+
+# ========== 小智AI助手 ==========
 def render_ai_assistant():
     st.markdown('<div class="card">', unsafe_allow_html=True)
     st.subheader("🤖 小智AI助手")
@@ -1643,39 +1645,39 @@ def main():
     
     if st.session_state.nav_index == 0:
         render_core_creation()
-elif ST . session _ state . nav _ index = = 1:
-render_ai_assistant()
-elif ST . session _ state . nav _ index = = 2:
-render_asset_system()
-elif ST . session _ state . nav _ index = = 3:
-render_community()
-否则:
-渲染经济()
-圣马克道(“-”)
-如果圣巴顿(“📬 消息中心"):
-渲染消息()
-st.markdown("####📋 新手任务")
-任务= [
-{ "姓名": "上传视频“，”完成“:海报_计数> 0或壁纸_计数> 0}，
-{ "姓名": "生成第一个版图”，“完成”:poster_count > 0}，
-{ "姓名": "完成一次公益捐赠”，“完成”:get _ welfare _ points(ST . session _ state . username)> 0 }，
+    elif st.session_state.nav_index == 1:
+        render_ai_assistant()
+    elif st.session_state.nav_index == 2:
+        render_asset_system()
+    elif st.session_state.nav_index == 3:
+        render_community()
+    else:
+        render_economy()
+        st.markdown("---")
+        if st.button("📬 消息中心"):
+            render_messages()
+        st.markdown("#### 📋 新手任务")
+        tasks = [
+            {"name": "上传视频", "done": poster_count > 0 or wallpaper_count > 0},
+            {"name": "生成第一个版图", "done": poster_count > 0},
+            {"name": "完成一次公益捐赠", "done": get_welfare_points(st.session_state.username) > 0},
         ]
-对于任务中的任务:
-status _ class = " done " if task[" done "]else " pending "
-status_text = "已完成"如果任务["完成"]否则"未完成"
-圣马克道(f " ")
-< div class= "任务项目">
-< span class = " task-name " > { task[' name ']}
-< span class = " task-status { status _ class } " > { status _ text }
-</div >
-"""，unsafe_allow_html=True)
-如果不是任务[0][“完成”]:
-st.info("💡 去「剪辑」上传一个视频试试!")
-elif非任务[1][“完成”]:
-st.info("💡 上传视频后,去「仓库」生成版图吧!")
-elif非任务[2][“完成”]:
-st.info("💡 去「我的」做一次公益捐赠,获得勋章!")
-否则:
+        for task in tasks:
+            status_class = "done" if task["done"] else "pending"
+            status_text = "已完成" if task["done"] else "未完成"
+            st.markdown(f"""
+            <div class="task-item">
+                <span class="task-name">{task['name']}</span>
+                <span class="task-status {status_class}">{status_text}</span>
+            </div>
+            """, unsafe_allow_html=True)
+        if not tasks[0]["done"]:
+            st.info("💡 去「剪辑」上传一个视频试试！")
+        elif not tasks[1]["done"]:
+            st.info("💡 上传视频后，去「仓库」生成版图吧！")
+        elif not tasks[2]["done"]:
+            st.info("💡 去「我的」做一次公益捐赠，获得勋章！")
+        else:
             st.balloons()
             st.success("🎉 恭喜你完成所有新手任务！")
 
