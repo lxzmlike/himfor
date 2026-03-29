@@ -1,28 +1,28 @@
 """
-小智-智能视频助手v8.9
-新增:AI助手自然语言理解+智能推荐
+小智 - 智能视频助手 v8.9
+新增：AI 助手自然语言理解 + 智能推荐
 """
 
-将streamlit导入为st
-导入操作系统
-导入hashlib
-导入sqlite3
-导入临时文件
-导入子流程
-导入机密
-导入uuid
-导入json
-导入时间
-随机导入
-进口re
-导入cv2
-从PIL导入图像，图像绘制，图像字体
-从日期时间导入日期时间，时间增量
+import streamlit as st
+import os
+import hashlib
+import sqlite3
+import tempfile
+import subprocess
+import secrets
+import uuid
+import json
+import time
+import random
+import re
+import cv2
+from PIL import Image, ImageDraw, ImageFont
+from datetime import datetime, timedelta
 
-st.set_page_config(page_title= "小智-智能视频助手"，page_icon= "🤖"，layout="wide ")
+st.set_page_config(page_title="小智 - 智能视频助手", page_icon="🤖", layout="wide")
 
 # ========== PWA支持 ==========
-圣马克道(""
+st.markdown("""
 <link rel="manifest" href="manifest.json">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -960,11 +960,10 @@ def get_materials_for_story(story_text):
         for tag in material["tags"]:
             if tag in story_lower:
                 selected.add(material["name"])
-如果未选择:
-selected = { VIDEO _ MATERIALS[0][" name "]，VIDEO_MATERIALS[1]["name"]}
-result =[m for m in VIDEO _ MATERIALS if m[" name "]in selected]
-回送结果
-# ========== 小智AI助手 ==========
+    if not selected:
+        selected = {VIDEO_MATERIALS[0]["name"], VIDEO_MATERIALS[1]["name"]}
+    result = [m for m in VIDEO_MATERIALS if m["name"] in selected]
+    return result# ========== 小智AI助手 ==========
 def render_ai_assistant():
     st.markdown('<div class="card">', unsafe_allow_html=True)
     st.subheader("🤖 小智AI助手")
@@ -1644,39 +1643,39 @@ def main():
     
     if st.session_state.nav_index == 0:
         render_core_creation()
-    elif st.session_state.nav_index == 1:
-        render_ai_assistant()
-    elif st.session_state.nav_index == 2:
-        render_asset_system()
-    elif st.session_state.nav_index == 3:
-        render_community()
-    else:
-        render_economy()
-        st.markdown("---")
-        if st.button("📬 消息中心"):
-            render_messages()
-        st.markdown("#### 📋 新手任务")
-        tasks = [
-                <span class="task-status {status_class}">{status_text}</span>
+elif ST . session _ state . nav _ index = = 1:
+render_ai_assistant()
+elif ST . session _ state . nav _ index = = 2:
+render_asset_system()
+elif ST . session _ state . nav _ index = = 3:
+render_community()
+否则:
+渲染经济()
+圣马克道(“-”)
+如果圣巴顿(“📬 消息中心"):
+渲染消息()
+st.markdown("####📋 新手任务")
+任务= [
+{ "姓名": "上传视频“，”完成“:海报_计数> 0或壁纸_计数> 0}，
 { "姓名": "生成第一个版图”，“完成”:poster_count > 0}，
-{ "姓名": "完成一次公益捐赠","完成":获取_福利_积分(ST . session _ state。用户名)> 0 }，
+{ "姓名": "完成一次公益捐赠”，“完成”:get _ welfare _ points(ST . session _ state . username)> 0 }，
         ]
 对于任务中的任务:
 status _ class = " done " if task[" done "]else " pending "
 status_text = "已完成"如果任务["完成"]否则"未完成"
 圣马克道(f " ")
 < div class= "任务项目">
-< span class = "任务名称" > {任务['名称']}
+< span class = " task-name " > { task[' name ']}
 < span class = " task-status { status _ class } " > { status _ text }
-            </div>
-            """, unsafe_allow_html=True)
-        if not tasks[0]["done"]:
-            st.info("💡 去「剪辑」上传一个视频试试！")
-        elif not tasks[1]["done"]:
-            st.info("💡 上传视频后，去「仓库」生成版图吧！")
-        elif not tasks[2]["done"]:
-            st.info("💡 去「我的」做一次公益捐赠，获得勋章！")
-        else:
+</div >
+"""，unsafe_allow_html=True)
+如果不是任务[0][“完成”]:
+st.info("💡 去「剪辑」上传一个视频试试!")
+elif非任务[1][“完成”]:
+st.info("💡 上传视频后,去「仓库」生成版图吧!")
+elif非任务[2][“完成”]:
+st.info("💡 去「我的」做一次公益捐赠,获得勋章!")
+否则:
             st.balloons()
             st.success("🎉 恭喜你完成所有新手任务！")
 
