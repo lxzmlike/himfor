@@ -11,7 +11,7 @@ import tempfile
 import subprocess
 import secrets
 import uuid
-导入json
+import json
 import time
 import random
 import re
@@ -68,8 +68,8 @@ st.markdown("""
 }
 .stat-number {
     font-size: 28px;
-    font-weight: bold;
-    color: #667eea;
+字体粗细:粗体；
+颜色:# 667eea
 }
 .stat-label {
     font-size: 12px;
@@ -453,34 +453,34 @@ def register_user(username, password):
     c.execute("SELECT COUNT(*) FROM users")
     count = c.fetchone()[0]
     admin_level = 5 if count == 0 else 0
-    c.execute("INSERT INTO users (username, password_hash, salt, points, admin_level) VALUES (?, ?, ?, 100, ?)", 
-              (username, pwd_hash, salt, admin_level))
-    conn.commit()
-    conn.close()
-    return True, "注册成功"
+c . execute(" INSERT INTO users(username，password_hash，salt，points，admin_level)值(？, ?, ?, 100, ?)",
+(用户名、密码散列、salt、管理员级别))
+conn.commit()
+conn.close()
+还真，”注册成功"
 
-def get_points(username):
-    conn = sqlite3.connect('users.db')
-    c = conn.cursor()
-    c.execute("SELECT points FROM users WHERE username=?", (username,))
-    row = c.fetchone()
-    conn.close()
-    return row[0] if row else 0
+定义获取点数(用户名):
+conn = sqlite3.connect('users.db ')
+c = conn.cursor()
+c . execute(" SELECT points FROM username =？"，(用户名，))
+row = c.fetchone()
+conn.close()
+如果row else 0，则返回row[0]
 
-def spend_points(username, points, reason):
-    conn = sqlite3.connect('users.db')
-    conn.execute("BEGIN")
-    c = conn.cursor()
-    c.execute("SELECT points FROM users WHERE username=? FOR UPDATE", (username,))
-    row = c.fetchone()
-    if not row or row[0] < points:
-        conn.rollback()
-        conn.close()
-        return False
-    c.execute("UPDATE users SET points = points - ? WHERE username=?", (points, username))
-    c.execute("INSERT INTO user_logs (username, action) VALUES (?, ?)", (username, reason))
-    conn.commit()
-    conn.close()
+def spend_points(用户名、积分、原因):
+conn = sqlite3.connect('users.db ')
+conn.execute(“开始”)
+c = conn.cursor()
+c . execute(" SELECT points FROM username =？用于更新"，(用户名，))
+row = c.fetchone()
+如果不是行或行[0]<分:
+conn.rollback()
+conn.close()
+返回False
+c.execute("更新用户设定点=点数-？其中用户名=？"，(点数，用户名))
+c.execute("INSERT INTO user_logs(用户名，操作)值(？, ?)"，(用户名，原因))
+conn.commit()
+conn.close()
     return True
 
 def add_points(username, amount, reason):
@@ -831,8 +831,8 @@ def render_welfare():
         for i, leader in enumerate(leaders):
             st.markdown(f"{i+1}. {leader[0]} - 累计捐赠 {leader[1]} 积分")
     else:
-        st.info("暂无公益记录")
-    conn.close()
+st.info("暂无公益记录")
+conn.close()
     st.markdown('</div>', unsafe_allow_html=True)
 
 # ========== 奖池金 ==========
@@ -891,7 +891,9 @@ def render_jackpot():
     - **10%** 分配给新星榜Top4
     - **10%** 滚入下月奖池
     """)
-    st.markdown('</div>', unsafe# ========== 智能推荐辅助函数 ==========
+    st.markdown('</div>', unsafe_allow_html=True)
+
+# ========== 智能推荐辅助函数 ==========
 def get_user_preferences(username):
     """获取用户偏好标签（基于购买和当前视频）"""
     conn = sqlite3.connect('users.db')
@@ -928,42 +930,40 @@ def get_user_preferences(username):
         keywords = ["创意", "热门"]
     return keywords
 
-# ========== 素材库（可移入 config）==========
+# ========== 素材库 ==========
 VIDEO_MATERIALS = [
     {"name": "夏日海滩", "tags": ["夏天", "海边"], "url": "https://www.w3schools.com/html/mov_bbb.mp4"},
     {"name": "城市夜景", "tags": ["城市", "夜景"], "url": "https://www.w3schools.com/html/movie.mp4"},
     {"name": "美食特写", "tags": ["美食"], "url": "https://www.w3schools.com/html/mov_bbb.mp4"},
     {"name": "萌宠日常", "tags": ["宠物"], "url": "https://www.w3schools.com/html/mov_bbb.mp4"},
-    {"name": "旅行Vlog", "tags": ["旅行"], "url": "https://www.w3schools.com/html/mov_bbb.mp4"},
-    {"name": "科技未来", "tags": ["科技"], "url": "https://www.w3schools.com/html/movie.mp4"},
+{ "姓名": "旅行视频日志"，"标签":["旅行"]，" URL ":" https://www . w3schools . com/html/mov _ BBB . MP4 " }，
+{ "姓名": "科技未来","标签":["科技"]，" URL ":" https://www。w3schools。com/html/movie。MP4 " }，
 ]
 
-MUSIC_MATERIALS = [
-    {"name": "轻快吉他", "tags": ["轻快"], "url": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3"},
-    {"name": "舒缓钢琴", "tags": ["舒缓"], "url": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3"},
-    {"name": "动感节奏", "tags": ["动感"], "url": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3"},
+音乐_材料= [
+{ "姓名": "轻快吉他","标签":["轻快"]，" URL ":" https://www .声音螺旋. com/examples/MP3/sound helix-Song-1 .MP3 " }，
+{ "姓名": "舒缓钢琴","标签":["舒缓"]，" URL ":" https://www .声音螺旋. com/examples/MP3/sound helix-Song-2mp 3 " }，
+{ "姓名": "动感节奏","标签":["动感"]，" URL ":" https://www .声音螺旋. com/examples/MP3/sound helix-Song-3 .MP3 " }，
 ]
 
 TEXT_TEMPLATES = [
-    {"name": "夏日文案", "text": "夏天的风，吹过海面", "tags": ["夏天"]},
-    {"name": "旅行标语", "text": "在路上，遇见自己", "tags": ["旅行"]},
-    {"name": "美食语录", "text": "唯有美食与爱不可辜负", "tags": ["美食"]},
+{ "姓名": "夏日文案“，”文本“:”夏天的风,吹过海面“，”标签“:[”夏天"]},
+{ "姓名": "旅行标语“，”文本“:”在路上,遇见自己“，”标签“:[”旅行"]},
+{ "姓名": "美食语录“，”文本“:”唯有美食与爱不可辜负“，”标签“:[”美食"]},
 ]
 
-def get_materials_for_story(story_text):
-    """根据故事文本返回匹配的素材列表（名称和URL）"""
-    story_lower = story_text.lower()
-    selected = set()
-    for material in VIDEO_MATERIALS:
-        for tag in material["tags"]:
-            if tag in story_lower:
-                selected.add(material["name"])
-    if not selected:
-        selected = {VIDEO_MATERIALS[0]["name"], VIDEO_MATERIALS[1]["name"]}
-    result = [m for m in VIDEO_MATERIALS if m["name"] in selected]
-    return result
-
-# ========== 小智AI助手 ==========
+def get _ materials _ for _ story(story _ text):
+"""根据故事文本返回匹配的素材列表（名称和网址)"""
+story_lower = story_text.lower()
+selected = set()
+对于视频_材料中的素材：
+对于材料中的标签[“标签”]:
+如果标签在故事_下部中：
+selected.add(材料["名称"])
+如果未选择:
+selected = { VIDEO _ MATERIALS[0][" name "]，VIDEO_MATERIALS[1]["name"]}
+result =[m for m in VIDEO _ MATERIALS if m[" name "]in selected]
+回送结果# ========== 小智AI助手 ==========
 def render_ai_assistant():
     st.markdown('<div class="card">', unsafe_allow_html=True)
     st.subheader("🤖 小智AI助手")
@@ -1266,9 +1266,9 @@ def render_core_creation():
                 with st.expander("选择速度", expanded=True):
                     def apply_speed(s):
                         out = tempfile.NamedTemporaryFile(suffix=".mp4", delete=False).name
-                        speed_video(st.session_state.video_path, s, out)
-                        with open(out, "rb") as f:
-                            st.download_button("下载", f, file_name=f"speed_{s}x.mp4")
+speed _ video(ST . session _ state . video _ path，s，out)
+开(出，“rb”)为f:
+st.download_button("下载"，f，文件名=f"speed_{s}x.mp4 ")
                     cols_s = st.columns(4)
                     with cols_s[0]:
                         if st.button("0.5x"): apply_speed(0.5)
@@ -1382,28 +1382,28 @@ def render_asset_system():
                 st.info(f"已复制到剪贴板（功能开发中）")
 
 def render_economy():
-    st.markdown("### 💰 经济激励闭环")
-    points = get_points(st.session_state.username)
-    st.metric("我的积分", points)
-    st.markdown("#### 🌍 公益积分")
-    if st.button("做公益", use_container_width=True):
-        render_welfare()
-    st.markdown("#### 🏆 奖池金")
-    if st.button("查看奖池", use_container_width=True):
-        render_jackpot()
+st.markdown("###💰 经济激励闭环")
+点数=获取点数(st.session_state.username)
+公制单位("我的积分“，分)
+st.markdown("####🌍 公益积分")
+如果圣巴顿(“做公益"，use_container_width=True):
+render_welfare()
+st.markdown("####🏆 奖池金")
+如果圣巴顿(“查看奖池"，use_container_width=True):
+render_jackpot()
 
-def render_community():
-    st.markdown("### 👥 社区与互动")
-    conn = sqlite3.connect('users.db')
-    c = conn.cursor()
-    c.execute("SELECT id, title, price_points, image_path FROM posters WHERE status='on_sale' ORDER BY created_at DESC LIMIT 6")
-    rec = c.fetchall()
-    conn.close()
-    if rec:
-        cols = st.columns(2)
-        for i, (pid, title, price, img) in enumerate(rec):
-            with cols[i%2]:
-                if img and os.path.exists(img):
+def render_community()。
+st.markdown("###👥 社区与互动")
+conn = sqlite3.connect('users.db ')
+c = conn.cursor()
+c.execute("SELECT id，title，price_points，image _ path FROM posts WHERE status = ' on _ sale ' ORDER BY created _ at desc限制6 ")
+rec = c.fetchall()
+conn.close()
+如果建议:
+cols = st.columns(2)
+对于I，(pid，title，price，img) in enumerate(rec):
+包含列[i%2]:
+如果img和os.path.exists(img):
                     st.image(img, use_column_width=True)
                 st.markdown(f"**{title}**")
                 st.caption(f"💰 {price}积分")
@@ -1429,19 +1429,19 @@ def render_toolbox():
     cols = st.columns(3)
     for i, (name, key, status) in enumerate(tools):
         with cols[i % 3]:
-            st.markdown(f"""
-            <div class="feature-card">
-                <div class="feature-icon">{name[0]}</div>
-                <div class="feature-name">{name}</div>
-                <div class="feature-desc">{'即将上线' if status == '开发中' else '体验一下'}</div>
-            </div>
-            """, unsafe_allow_html=True)
-            if st.button(f"使用 {name}", key=f"tool_{key}"):
-                if key == "teleprompter":
-                    render_teleprompter()
-                elif key == "meme":
-                    render_meme_factory()
-                else:
+圣马克道(f " ")
+< div class= "功能卡">
+< div class = " feature-icon " > { name[0]} </div >
+< div class = " feature-name " > { name } </div >
+< div class="feature-desc">{ '即将上线如果状态== '开发中'否则'体验一下}</div >
+</div >
+"""，unsafe_allow_html=True)
+如果圣按钮(f "使用{name} "，key=f"tool_{key} ":
+if key == "提词器":
+render _提词器()
+elif key == "meme ":
+render_meme_factory()
+否则:
                     st.info(f"{name}功能开发中，敬请期待！")
 
 def render_teleprompter():
@@ -1559,16 +1559,16 @@ def render_language():
         with col1:
             if st.button("中文"):
                 st.session_state.language = 'zh'
-                st.rerun()
-        with col2:
-            if st.button("English"):
-                st.session_state.language = 'en'
-                st.rerun()
+st.rerun()
+使用col2:
+如果圣巴顿("英语"):
+st.session_state.language = 'en '
+st.rerun()
 
 # ========== 主程序 ==========
 def main():
-    if 'language' not in st.session_state:
-        st.session_state.language = 'zh'
+如果“语言”不在圣会话状态中:
+st.session_state.language = 'zh '
     
     if st.session_state.get('remember_me', False):
         if 'username' in st.session_state:
@@ -1594,9 +1594,9 @@ def main():
         st.info("👈 请先在左侧登录或注册")
         return
     
-    points = get_points(st.session_state.username)
-    conn = sqlite3.connect('users.db')
-    c = conn.cursor()
+点数=获取点数(st.session_state.username)
+conn = sqlite3.connect('users.db ')
+c = conn.cursor()
     c.execute("SELECT COUNT(*) FROM posters WHERE creator = ?", (st.session_state.username,))
     poster_count = c.fetchone()[0]
     c.execute("SELECT COUNT(*) FROM wallpapers WHERE creator = ?", (st.session_state.username,))
@@ -1616,38 +1616,38 @@ def main():
     
     conn = sqlite3.connect('users.db')
     c = conn.cursor()
-    c.execute("SELECT title, price_points FROM posters ORDER BY created_at DESC LIMIT 3")
-    hot_posters = c.fetchall()
+c.execute("SELECT title，price _ points FROM posts ORDER BY created _ at desc LIMIT 3 ")
+hot_posters = c.fetchall()
     c.execute("SELECT title, price_points FROM wallpapers ORDER BY created_at DESC LIMIT 3")
     hot_wallpapers = c.fetchall()
-    conn.close()
-    if hot_posters or hot_wallpapers:
-        st.markdown('<div class="stat-label" style="margin-bottom: 10px;">🔥 热门推荐</div>', unsafe_allow_html=True)
-        st.markdown('<div class="hot-grid">', unsafe_allow_html=True)
-        for p in hot_posters[:2]:
-            st.markdown(f'<div class="hot-item">🖼️ {p[0]}<br>{p[1]}积分</div>', unsafe_allow_html=True)
-        for w in hot_wallpapers[:2]:
-            st.markdown(f'<div class="hot-item">🎨 {w[0]}<br>{w[1]}积分</div>', unsafe_allow_html=True)
-        st.markdown('</div>', unsafe_allow_html=True)
+conn.close()
+如果是热门海报或热门壁纸:
+ST . markdown(' < div class = " stat-label " style = " margin-bottom:10px；>🔥 热门推荐</div > '，unsafe_allow_html=True)
+ST . markdown(' < div class = " hot-grid " > '，unsafe_allow_html=True)
+对于热_海报中的p[:2]:
+ST . markdown(f ' < divclass="hot-item">🖼️{ p[0]} < br > { p[1]}积分</div > '，unsafe_allow_html=True)
+对于热门壁纸中的w[:2]:
+ST . markdown(f ' < div class = " hot-item " >🎨{w[0]}<br>{w[1]}积分</div > '，unsafe_allow_html=True)
+如果"导航索引"不在第一会话状态中：
+st.markdown('</div > '，unsafe_allow_html=True)
+如果"导航索引"不在第一会话状态中：
+st.session_state.nav_index = 0
     
-    if 'nav_index' not in st.session_state:
-        st.session_state.nav_index = 0
+如果"导航索引"不在第一会话状态中：
+cols = st.columns(len(nav_items))
+对于我，枚举中的名称(导航项目):
+带列[i]:
+if st.button(name，use_container_width=True):
+st.session_state.nav_index = i
+st.rerun()
     
-    nav_items = ["🎬 剪辑", "🤖 AI创作", "📦 仓库", "🌐 社区", "👤 我的"]
-    cols = st.columns(len(nav_items))
-    for i, name in enumerate(nav_items):
-        with cols[i]:
-            if st.button(name, use_container_width=True):
-                st.session_state.nav_index = i
-                st.rerun()
-    
-    if st.session_state.nav_index == 0:
-        render_core_creation()
-    elif st.session_state.nav_index == 1:
-status_text = "已完成"如果任务["完成"]否则"未完成"
-elif ST . session _ state . nav _ index = = 2:
+如果st.session_state.nav_index == 0:
+render_core_creation()
+ 否则如果第一会话状态。导航索引= = 1:
+render_ai_assistant()
+ 否则如果第一会话状态。导航索引= = 2:
 render_asset_system()
-elif ST . session _ state . nav _ index = = 3:
+否则如果第一会话状态。nav _ index = = 3:
 render_community()
 否则:
 渲染经济()
@@ -1657,35 +1657,27 @@ render_community()
 st.markdown("####📋 新手任务")
 任务= [
 { "姓名": "上传视频“，”完成“:海报_计数> 0或壁纸_计数> 0}，
-{ "姓名": "生成第一个版图”，“完成”:poster_count > 0}，
-{ "姓名": "完成一次公益捐赠”，“完成”:get _ welfare _ points(ST . session _ state . username)> 0 }，
-        ]
+{ "姓名": "生成第一个版图","完成":poster_count > 0}，
+{ "姓名": "完成一次公益捐赠","完成":获取_福利_积分(第一会话状态.用户名)> 0 },
+如果"导航索引"不在第一会话状态中：
 对于任务中的任务:
 status _ class = " done " if task[" done "]else " pending "
 status_text = "已完成"如果任务["完成"]否则"未完成"
 圣马克道(f " ")
 < div class= "任务项目">
-< span class = " task-name " > { task[' name ']}
-< span class = " task-status { status _ class } " > { status _ text }
-</div >
-for task in tasks:
-status _ class = " done " if task[" done "]else " pending "
-status_text = "已完成"如果任务["完成"]否则"未完成"
-圣马克当(f " " "
-< div class= "任务项目">
-< span class = " task-name " > { task[' name ']}
+< span class = "任务名称" > {任务['名称']}
 < span class = " task-status { status _ class } " > { status _ text }
 </div >
 """，unsafe_allow_html=True)
-        if not tasks[0]["done"]:
-            st.info("💡 去「剪辑」上传一个视频试试！")
-        elif not tasks[1]["done"]:
-            st.info("💡 上传视频后，去「仓库」生成版图吧！")
-        elif not tasks[2]["done"]:
-            st.info("💡 去「我的」做一次公益捐赠，获得勋章！")
-        else:
-            st.balloons()
-            st.success("🎉 恭喜你完成所有新手任务！")
+如果不是任务[0][“完成”]:
+st.info("💡 去「剪辑」上传一个视频试试!")
+ 否则如果非任务[1]["完成"]:
+st.info("💡 上传视频后,去「仓库」生成版图吧!")
+ 否则如果非任务[2]["完成"]:
+st.info("💡 去「我的」做一次公益捐赠,获得勋章!")
+否则:
+圣气球
+圣成功(“🎉 恭喜你完成所有新手任务!")
 
-if __name__ == "__main__":
-    main()_allow_html=True)
+if __name__ == "__main__ ":
+主要的()
