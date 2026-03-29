@@ -1624,29 +1624,26 @@ def main():
         if st.button("📬 消息中心"):
             render_messages()
         st.markdown("#### 📋 新手任务")
-        tasks = [
-            {"name": "上传视频", "done": poster_count > 0 or wallpaper_count > 0},
-            {"name": "生成第一个版图", "done": poster_count > 0},
-            {"name": "完成一次公益捐赠", "done": get_welfare_points(st.session_state.username) > 0},
-        ]
-        for task in tasks:
-            status_class = "done" if task["done"] else "pending"
-            status_text = "已完成" if task["done"] else "未完成"
-            st.markdown(f"""
-            <div class="task-item">
-                <span class="task-name">{task['name']}</span>
-                <span class="task-status {status_class}">{status_text}</span>
-            </div>
-            """, unsafe_allow_html=True)
-        if not tasks[0]["done"]:
-            st.info("💡 去「剪辑」上传一个视频试试！")
-        elif not tasks[1]["done"]:
-            st.info("💡 上传视频后，去「仓库」生成版图吧！")
-        elif not tasks[2]["done"]:
-            st.info("💡 去「我的」做一次公益捐赠，获得勋章！")
-        else:
-            st.balloons()
-            st.success("🎉 恭喜你完成所有新手任务！")
-
-if __name__ == "__main__":
-    main()
+tasks = [
+    {"name": "上传视频", "done": poster_count > 0 or wallpaper_count > 0},
+    {"name": "生成第一个版图", "done": poster_count > 0},
+    {"name": "完成一次公益捐赠", "done": get_welfare_points(st.session_state.username) > 0},
+]
+for task in tasks:
+    status_class = "done" if task["done"] else "pending"
+    status_text = "已完成" if task["done"] else "未完成"
+    st.markdown(f"""
+    <div class="task-item">
+        <span class="task-name">{task['name']}</span>
+        <span class="task-status {status_class}">{status_text}</span>
+    </div>
+    """, unsafe_allow_html=True)
+if not tasks[0]["done"]:
+    st.info("💡 去「剪辑」上传一个视频试试！")
+elif not tasks[1]["done"]:
+    st.info("💡 上传视频后，去「仓库」生成版图吧！")
+elif not tasks[2]["done"]:
+    st.info("💡 去「我的」做一次公益捐赠，获得勋章！")
+else:
+    st.balloons()
+    st.success("🎉 恭喜你完成所有新手任务！")
