@@ -1962,8 +1962,7 @@ def main():
         for w in hot_wallpapers[:2]:
             st.markdown(f'<div class="hot-item">🎨 {w[0]}<br>{w[1]}积分</div>', unsafe_allow_html=True)
         st.markdown('</div>', unsafe_allow_html=True)
-    
-    # 底部导航栏
+        # 底部导航栏
     if 'nav_index' not in st.session_state:
         st.session_state.nav_index = 0
 
