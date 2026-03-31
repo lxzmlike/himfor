@@ -1890,6 +1890,33 @@ def render_language():
                 st.session_state.language = 'en'
                 st.rerun()
 
+def render_messages():
+    st.markdown('<div class="card">', unsafe_allow_html=True)
+    st.subheader("📬 消息中心")
+    interact, system = get_notifications(st.session_state.username)
+    if not interact and not system:
+        st.info("暂无新消息")
+    else:
+        if interact:
+            st.markdown("#### 💬 互动消息")
+            for action, ts in interact:
+                st.markdown(f"""
+                <div class="message-item">
+                    📢 {action}<br>
+                    <div class="message-time">{ts}</div>
+                </div>
+                """, unsafe_allow_html=True)
+        if system:
+            st.markdown("#### 📢 系统通知")
+            for msg, ts in system:
+                st.markdown(f"""
+                <div class="message-item">
+                    🔔 {msg}<br>
+                    <div class="message-time">{ts}</div>
+                </div>
+                """, unsafe_allow_html=True)
+    st.markdown('</div>', unsafe_allow_html=True)
+
 def render_teleprompter():
     st.markdown("### 🎤 提词拍摄")
     st.markdown("在摄像头画面上显示台词，滚动提词，告别忘词！")
@@ -1965,7 +1992,7 @@ def main():
     if st.session_state.get('remember_me', False):
         if 'username' in st.session_state:
             st.session_state.logged_in = True
-    
+
     init_db()
     init_poster_tables()
     init_wallpaper_tables()
@@ -1974,10 +2001,12 @@ def main():
     init_community_tables()
     init_material_tables()
     init_user_actions_table()
-    
+    init_promotions_table()
+    init_tasks_table()
+
     render_language()
     render_auth()
-    
+
     if not st.session_state.get('logged_in', False):
         st.markdown("""
         <div class="main-header">
@@ -1988,45 +2017,8 @@ def main():
         """, unsafe_allow_html=True)
         st.info("👈 请先在左侧登录或注册")
         return
-    
-    points = get_points(st.session_state.username)
-    conn = sqlite3.connect('users.db')
-    c = conn.cursor()
-    c.execute("SELECT COUNT(*) FROM posters WHERE creator = ?", (st.session_state.username,))
-    poster_count = c.fetchone()[0]
-    c.execute("SELECT COUNT(*) FROM wallpapers WHERE creator = ?", (st.session_state.username,))
-    wallpaper_count = c.fetchone()[0]
-    conn.close()
-    
-    st.markdown('<div class="dashboard-card">', unsafe_allow_html=True)
-    st.markdown('<div class="stat-row">', unsafe_allow_html=True)
-    st.markdown(f'<div class="stat-item"><div class="stat-number">{points}</div><div class="stat-label">积分</div></div>', unsafe_allow_html=True)
-    st.markdown(f'<div class="stat-item"><div class="stat-number">{poster_count + wallpaper_count}</div><div class="stat-label">作品数</div></div>', unsafe_allow_html=True)
-    st.markdown(f'<div class="stat-item"><div class="stat-number">{poster_count}</div><div class="stat-label">版图</div></div>', unsafe_allow_html=True)
-    st.markdown(f'<div class="stat-item"><div class="stat-number">{wallpaper_count}</div><div class="stat-label">壁纸</div></div>', unsafe_allow_html=True)
-    st.markdown('</div>', unsafe_allow_html=True)
-    
-    if 'first_visit' not in st.session_state:
-        st.session_state.first_visit = True
-        st.info("🎉 欢迎来到小智！点击底部导航栏体验不同功能，试试「提词拍摄」和「表情包工厂」。说“剪掉前5秒”也能剪视频哦！")
-    
-    conn = sqlite3.connect('users.db')
-    c = conn.cursor()
-    c.execute("SELECT title, price_points FROM posters ORDER BY created_at DESC LIMIT 3")
-    hot_posters = c.fetchall()
-    c.execute("SELECT title, price_points FROM wallpapers ORDER BY created_at DESC LIMIT 3")
-    hot_wallpapers = c.fetchall()
-    conn.close()
-    if hot_posters or hot_wallpapers:
-        st.markdown('<div class="stat-label" style="margin-bottom: 10px;">🔥 热门推荐</div>', unsafe_allow_html=True)
-        st.markdown('<div class="hot-grid">', unsafe_allow_html=True)
-        for p in hot_posters[:2]:
-            st.markdown(f'<div class="hot-item">🖼️ {p[0]}<br>{p[1]}积分</div>', unsafe_allow_html=True)
-        for w in hot_wallpapers[:2]:
-            st.markdown(f'<div class="hot-item">🎨 {w[0]}<br>{w[1]}积分</div>', unsafe_allow_html=True)
-        st.markdown('</div>', unsafe_allow_html=True)
-    
-        # 底部导航栏
+
+    # 底部导航栏
     if 'nav_index' not in st.session_state:
         st.session_state.nav_index = 0
 
