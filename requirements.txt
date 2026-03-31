@@ -2,6 +2,9 @@ streamlit
 moviepy
 opencv-python
 numpy
+pillow
+gTTS
+requests
+jieba
 pandas
 plotly
-pillow
