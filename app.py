@@ -2026,17 +2026,17 @@ def main():
             st.markdown(f'<div class="hot-item">🎨 {w[0]}<br>{w[1]}积分</div>', unsafe_allow_html=True)
         st.markdown('</div>', unsafe_allow_html=True)
     
-    # 底部导航栏
+        # 底部导航栏
     if 'nav_index' not in st.session_state:
         st.session_state.nav_index = 0
 
     nav_items = ["🎬 剪辑", "🤖 AI创作", "📦 素材", "🌐 社区", "👤 我的"]
     cols = st.columns(len(nav_items))
     for i, name in enumerate(nav_items):
-    with cols[i]:
-        if st.button(name, use_container_width=True):
-            st.session_state.nav_index = i
-            st.rerun()
+        with cols[i]:
+            if st.button(name, use_container_width=True):
+                st.session_state.nav_index = i
+                st.rerun()
 
     if st.session_state.nav_index == 0:
         render_clip_page()
