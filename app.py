@@ -2033,10 +2033,10 @@ def main():
     nav_items = ["🎬 剪辑", "🤖 AI创作", "📦 素材", "🌐 社区", "👤 我的"]
     cols = st.columns(len(nav_items))
     for i, name in enumerate(nav_items):
-        with cols[i]:
-            if st.button(name, use_container_width=True):
-                st.session_state.nav_index = i
-                st.rerun()
+    with cols[i]:
+        if st.button(name, use_container_width=True):
+            st.session_state.nav_index = i
+            st.rerun()
 
     if st.session_state.nav_index == 0:
         render_clip_page()
