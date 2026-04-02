@@ -33,6 +33,139 @@ os.makedirs(POSTER_DIR, exist_ok=True)
 os.makedirs(WALLPAPER_DIR, exist_ok=True)
 os.makedirs(CACHE_DIR, exist_ok=True)
 
+# ========== 增强 CSS（移动端 APP 风格 + 深色模式） ==========
+st.markdown("""
+<style>
+/* 主题变量 */
+:root {
+    --bg-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --card-bg: white;
+    --text-color: #333;
+    --border-color: #e0e0e0;
+}
+.dark {
+    --bg-gradient: linear-gradient(135deg, #1e1e2f 0%, #2a2a3a 100%);
+    --card-bg: #2d2d3a;
+    --text-color: #eee;
+    --border-color: #444;
+}
+.stApp {
+    background: var(--bg-gradient);
+    color: var(--text-color);
+}
+/* 卡片样式 */
+.dashboard-card, .grid-card, .upload-card, .feature-card, .voice-card, .example-card {
+    background: var(--card-bg);
+    border-radius: 20px;
+    padding: 15px;
+    margin-bottom: 15px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    transition: transform 0.2s ease;
+    color: var(--text-color);
+}
+.grid-card:hover, .feature-card:hover {
+    transform: translateY(-5px);
+}
+/* 按钮优化 */
+.stButton button {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    border: none;
+    border-radius: 40px;
+    padding: 10px 20px;
+    font-weight: bold;
+    width: 100%;
+    transition: opacity 0.2s;
+}
+.stButton button:hover {
+    opacity: 0.9;
+}
+/* 底部导航 */
+.nav-container {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: var(--card-bg);
+    backdrop-filter: blur(10px);
+    display: flex;
+    justify-content: space-around;
+    padding: 8px 0;
+    border-top: 1px solid var(--border-color);
+    z-index: 1000;
+}
+.nav-item {
+    text-align: center;
+    flex: 1;
+    cursor: pointer;
+    color: var(--text-color);
+    transition: 0.2s;
+    padding: 8px 0;
+    border-radius: 30px;
+}
+.nav-item.active {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    font-weight: bold;
+}
+.nav-icon {
+    font-size: 24px;
+}
+.nav-label {
+    font-size: 12px;
+}
+/* 移动端适配 */
+@media (max-width: 768px) {
+    .stButton button {
+        padding: 12px 0;
+        font-size: 16px;
+    }
+    h1 { font-size: 1.8rem; }
+    h2 { font-size: 1.4rem; }
+    h3 { font-size: 1.2rem; }
+    .grid-card {
+        margin-bottom: 12px;
+    }
+    .stat-number {
+        font-size: 22px;
+    }
+}
+/* 其他组件 */
+.points-badge {
+    background: linear-gradient(135deg, #f093fb, #f5576c);
+    color: white;
+    padding: 5px 15px;
+    border-radius: 20px;
+    display: inline-block;
+}
+.message-item {
+    background: var(--card-bg);
+    padding: 10px;
+    border-radius: 12px;
+    margin-bottom: 10px;
+}
+.message-time {
+    font-size: 12px;
+    color: #888;
+}
+</style>
+""", unsafe_allow_html=True)
+
+# 深色模式状态管理
+if 'dark_mode' not in st.session_state:
+    st.session_state.dark_mode = False
+
+# 注入深色模式脚本（通过 HTML 切换 body 类）
+st.markdown(f"""
+<script>
+    if ({str(st.session_state.dark_mode).lower()}) {{
+        document.body.classList.add('dark');
+    }} else {{
+        document.body.classList.remove('dark');
+    }}
+</script>
+""", unsafe_allow_html=True)
+
 # ========== 数据库初始化（所有表） ==========
 def init_db():
     conn = sqlite3.connect('users.db')
@@ -407,8 +540,10 @@ def init_social_tables():
         badge_id INTEGER,
         obtained_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )''')
-    conn.commit(
-    conn.close()# ========== 用户认证与积分 ==========
+    conn.commit()
+    conn.close()
+
+# ========== 用户认证与积分 ==========
 def hash_password(password, salt=None):
     if salt is None:
         salt = secrets.token_hex(16)
@@ -661,7 +796,9 @@ def render_preview_section(video_path):
                 st.session_state.preview_seek_time = t
                 st.rerun()
     if 'preview_seek_time' in st.session_state:
-        st.info(f"⏩ 跳转到 {st.session_state.preview_seek_time:.1f} 秒（视频定位功能开# ========== 智能分析 ==========
+        st.info(f"⏩ 跳转到 {st.session_state.preview_seek_time:.1f} 秒（视频定位功能开发中）")
+
+# ========== 智能分析 ==========
 def detect_scene_changes(video_path, threshold=30.0):
     cap = cv2.VideoCapture(video_path)
     prev_frame = None
@@ -884,7 +1021,9 @@ def generate_video_from_text_enhanced(title, content, materials, speed=1.0, voic
     output_file = tempfile.NamedTemporaryFile(suffix=".mp4", delete=False).name
     synthesize_video_advanced(video_paths, audio_file, output_file,
                               clip_duration=clip_duration, use_transition=use_transition)
-    return output_file发中）")# ========== 版图/壁纸系统 ==========
+    return output_file
+
+# ========== 版图/壁纸系统 ==========
 def save_poster_image(frame, poster_id):
     height, width = frame.shape[:2]
     max_size = 300
@@ -1113,7 +1252,7 @@ WELFARE_BADGES = [
 ]
 
 def render_welfare():
-    st.markdown('<div class="card">', unsafe_allow_html=True)
+    st.markdown('<div class="dashboard-card">', unsafe_allow_html=True)
     st.markdown("### 🌍 公益积分")
     total_donated = get_welfare_points(st.session_state.username)
     st.markdown(f"**累计捐赠：{total_donated} 积分**")
@@ -1161,7 +1300,7 @@ def render_welfare():
     st.markdown('</div>', unsafe_allow_html=True)
 
 def render_jackpot():
-    st.markdown('<div class="card">', unsafe_allow_html=True)
+    st.markdown('<div class="dashboard-card">', unsafe_allow_html=True)
     st.markdown("### 💰 小智奖池金")
     current_jackpot = get_current_jackpot()
     st.markdown(f"**本月奖池金：{current_jackpot} 积分**")
@@ -1206,7 +1345,9 @@ def render_jackpot():
     - **10%** 分配给新星榜Top4
     - **10%** 滚入下月奖池
     """)
-    st.markdown('</div>', unsafe_allow_html=True)# ========== 页面渲染函数 ==========
+    st.markdown('</div>', unsafe_allow_html=True)
+
+# ========== 页面渲染函数 ==========
 def render_clip_page():
     # 检查是否有待编辑视频
     if 'pending_edit_video' in st.session_state and st.session_state.pending_edit_video:
@@ -1387,10 +1528,10 @@ def render_ai_creation_page():
         with cols[i % 2]:
             with st.container():
                 st.markdown(f"""
-                <div style="background: white; border-radius: 16px; padding: 15px; margin-bottom: 15px;">
+                <div class="feature-card">
                     <div style="font-size: 32px;">{tool['icon']}</div>
-                    <div><strong>{tool['name']}</strong></div>
-                    <div style="color: gray; font-size: 12px;">{tool['desc']}</div>
+                    <div class="feature-name">{tool['name']}</div>
+                    <div class="feature-desc">{tool['desc']}</div>
                 </div>
                 """, unsafe_allow_html=True)
                 if st.button(f"使用 {tool['name']}", key=tool['func'], use_container_width=True):
@@ -1561,7 +1702,7 @@ def render_material_page():
         cols = st.columns(3)
         for i, tpl in enumerate(TEXT_TEMPLATES):
             with cols[i % 3]:
-                st.markdown(f"<div style='background:#f5f5f5; padding:10px; border-radius:10px;'>{tpl['text']}</div>", unsafe_allow_html=True)
+                st.markdown(f"<div style='background: var(--card-bg); padding:10px; border-radius:10px;'>{tpl['text']}</div>", unsafe_allow_html=True)
                 st.caption(f"**{tpl['name']}**")
                 if st.button(f"复制", key=f"text_{i}"):
                     st.info(f"已复制到剪贴板")
@@ -1807,6 +1948,12 @@ def render_my_page():
 def render_auth():
     with st.sidebar:
         st.markdown("### 👤 用户中心")
+        # 深色模式开关（放在侧边栏）
+        dark_mode = st.checkbox("🌙 深色模式", value=st.session_state.dark_mode)
+        if dark_mode != st.session_state.dark_mode:
+            st.session_state.dark_mode = dark_mode
+            st.rerun()
+        
         if not st.session_state.get('logged_in', False):
             tab = st.radio("", ["登录", "注册"], horizontal=True)
             if tab == "登录":
@@ -1861,7 +2008,7 @@ def render_language():
                 st.rerun()
 
 def render_messages():
-    st.markdown('<div class="card">', unsafe_allow_html=True)
+    st.markdown('<div class="dashboard-card">', unsafe_allow_html=True)
     st.subheader("📬 消息中心")
     interact, system = get_notifications(st.session_state.username)
     if not interact and not system:
@@ -2021,17 +2168,23 @@ def main():
         st.session_state.jump_to_clip = False
         st.rerun()
 
-    # 底部导航栏
+    # 底部导航栏（带高亮）
     if 'nav_index' not in st.session_state:
         st.session_state.nav_index = 0
 
     nav_items = ["🎬 剪辑", "🤖 AI创作", "📦 素材", "🌐 社区", "👤 我的"]
+    st.markdown('<div class="nav-container">', unsafe_allow_html=True)
     cols = st.columns(len(nav_items))
     for i, name in enumerate(nav_items):
         with cols[i]:
-            if st.button(name, use_container_width=True):
-                st.session_state.nav_index = i
-                st.rerun()
+            # 自定义样式：如果当前索引匹配，则添加active类
+            if i == st.session_state.nav_index:
+                st.markdown(f'<div class="nav-item active" onclick="window.location.reload()" style="cursor:pointer;">{name}</div>', unsafe_allow_html=True)
+            else:
+                if st.button(name, key=f"nav_{i}", use_container_width=True):
+                    st.session_state.nav_index = i
+                    st.rerun()
+    st.markdown('</div>', unsafe_allow_html=True)
 
     if st.session_state.nav_index == 0:
         render_clip_page()
